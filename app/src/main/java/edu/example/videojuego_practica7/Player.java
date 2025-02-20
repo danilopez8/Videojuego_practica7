@@ -48,6 +48,7 @@ public class Player {
         }
     }
 
+    // Dibujar el personaje en el canvas
     public void draw(Canvas canvas) {
         int srcX = frameWidth * frameActual;
         int srcY = 0; // Solo hay una fila

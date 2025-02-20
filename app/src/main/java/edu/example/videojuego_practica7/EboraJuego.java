@@ -17,6 +17,8 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
     private Player player;  // Usará la nueva versión de Player
     private Control derecha, izquierda, disparo, salto;  // Controles
     private boolean isRunning = false;
+    private int pantallaAncho, pantallaAlto;
+
 
     public EboraJuego(Context context) {
         super(context);
@@ -25,13 +27,13 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
         setFocusable(true);  // Permite recibir eventos de teclado o pantalla táctil
 
         // Inicializar los controles (ajusta las posiciones según sea necesario)
-        derecha = new Control(context, 50, 500);
+        derecha = new Control(context, 0, 0);
         derecha.cargarImagen(R.drawable.alante);
-        izquierda = new Control(context, 150, 500);
+        izquierda = new Control(context, 0, 0);
         izquierda.cargarImagen(R.drawable.atras);
-        disparo = new Control(context, 300, 500);
+        disparo = new Control(context, 0, 0);
         disparo.cargarImagen(R.drawable.disparo);
-        salto = new Control(context, 450, 500);
+        salto = new Control(context, 0, 0);
         salto.cargarImagen(R.drawable.salto);
     }
 
@@ -39,10 +41,43 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
     public void surfaceCreated(@NonNull SurfaceHolder holder) {
         player = new Player(getContext());  // Crea el personaje con la nueva lógica
 
+        // Obtén el tamaño de la pantalla
+        pantallaAncho = getWidth();
+        pantallaAlto = getHeight();
+
+        // Ajustar la posición de los controles según el tamaño de la pantalla
+        ajustarControles();
+
         // Inicia el hilo del juego
         gameThread = new Thread(this);
         isRunning = true;
         gameThread.start();
+    }
+
+    private void ajustarControles() {
+        float aux;
+
+        //flecha_izda
+        izquierda = new Control(getContext(), 50, pantallaAlto - 200);  // Posición en la parte inferior izquierda
+        izquierda.cargarImagen(R.drawable.atras);  // Imagen de flecha izquierda
+        izquierda.nombre = "IZQUIERDA";  // Nombre del control
+
+        //flecha_derecha
+        derecha = new Control(getContext(), 50 + izquierda.Ancho(), pantallaAlto - 200);  // Colocamos la flecha derecha justo al lado de la izquierda
+        derecha.cargarImagen(R.drawable.alante);  // Imagen de flecha derecha
+        derecha.nombre = "DERECHA";  // Nombre del control
+
+        //disparo (colocamos en el 5/7 del ancho)
+        aux = pantallaAncho - 460;  // Coloca el botón de disparo en la parte inferior derecha, ajustado
+        disparo = new Control(getContext(), aux, pantallaAlto - 200);  // Colocamos el botón de disparo
+        disparo.cargarImagen(R.drawable.disparo);
+        disparo.nombre = "DISPARO";  // Nombre del control
+
+        //salto (colocamos en el 4/7 del ancho)
+        aux = pantallaAncho - 250;  // Coloca el botón de salto justo a la izquierda de disparo
+        salto = new Control(getContext(), aux, pantallaAlto - 200);  // Colocamos el botón de salto
+        salto.cargarImagen(R.drawable.salto);
+        salto.nombre = "SALTO";  // Nombre del control
     }
 
     @Override
