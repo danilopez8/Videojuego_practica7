@@ -13,7 +13,7 @@ import androidx.annotation.NonNull;
 
 
 
-    public class GameView extends SurfaceView implements SurfaceHolder.Callback, Runnable {
+    public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, Runnable {
 
         private SurfaceHolder surfaceHolder;
         private Thread gameThread;
@@ -21,7 +21,7 @@ import androidx.annotation.NonNull;
         private Control derecha, izquierda, disparo, salto;  // Controles
         private boolean isRunning = false;
 
-        public GameView(Context context) {
+        public EboraJuego(Context context) {
             super(context);
             surfaceHolder = getHolder();
             surfaceHolder.addCallback(this);  // Establece el listener
