@@ -15,21 +15,20 @@ public class Enemigo {
     private float velocidadX, velocidadY;
     private int frameWidth, frameHeight;
     private int sizeLevel; // Tamaño de la pompa (de grande a pequeña)
-    private boolean reboteArriba = false; // Controla la dirección del rebote
     private EboraJuego juego;
 
     private static final int GRAVEDAD = 1;
-    private static final int MAX_SIZE_LEVEL = 3; // Nivel máximo (más grande)
+    private static final int MAX_SIZE_LEVEL = 3; // Nivel máximo
 
     public Enemigo(Context context, EboraJuego juego, int sizeLevel, float startX, float startY) {
         this.juego = juego;
         this.sizeLevel = sizeLevel;
 
-        // Cargar sprite de pompa
-        spriteSheet = BitmapFactory.decodeResource(context.getResources(), R.drawable.pompas);
+        // Cargar sprite de pompas (asegúrate de que R.drawable.pompas es la imagen correcta)
+        spriteSheet = BitmapFactory.decodeResource(context.getResources(), R.drawable.bolas2);
 
-        // Definir el tamaño de cada pompa según su nivel
-        int totalFrames = 4; // Supongamos que hay 4 tamaños de pompa en la imagen
+        // Se asume que la imagen tiene 4 frames de diferentes tamaños
+        int totalFrames = 4;
         frameWidth = spriteSheet.getWidth() / totalFrames;
         frameHeight = spriteSheet.getHeight();
 
@@ -39,13 +38,13 @@ public class Enemigo {
 
         // Velocidades aleatorias
         Random rand = new Random();
-        velocidadX = rand.nextFloat() * 5 + 2; // Velocidad horizontal aleatoria
-        velocidadY = 0; // Comienza cayendo
+        velocidadX = rand.nextFloat() * 5 + 2;
+        velocidadY = 0;
     }
 
     public void update() {
-        // Movimiento de caída
-        velocidadY += GRAVEDAD; // Aumentar la velocidad por gravedad
+        // Movimiento vertical (caída)
+        velocidadY += GRAVEDAD;
         y += velocidadY;
 
         // Movimiento horizontal
@@ -53,21 +52,22 @@ public class Enemigo {
 
         // Rebote en los bordes
         if (x <= 0 || x + frameWidth >= juego.getWidth()) {
-            velocidadX *= -1; // Invertir dirección
+            velocidadX *= -1;
         }
 
-        // Rebote en el suelo (simulación)
+        // Rebote en el suelo
         if (y + frameHeight >= juego.getHeight()) {
             y = juego.getHeight() - frameHeight;
-            velocidadY = -velocidadY * 0.8f; // Rebote con reducción de velocidad
+            velocidadY = -velocidadY * 0.8f;
         }
     }
 
     public void draw(Canvas canvas) {
-        int srcX = frameWidth * (MAX_SIZE_LEVEL - sizeLevel); // Ajusta el frame según el tamaño
+        // Seleccionar el frame según el tamaño: si sizeLevel = 3 (grande), se usará frame 0; si 2, frame 1; si 1, frame 2
+        int frameIndex = MAX_SIZE_LEVEL - sizeLevel;
+        int srcX = frameWidth * frameIndex;
         Rect src = new Rect(srcX, 0, srcX + frameWidth, frameHeight);
         Rect dst = new Rect((int) x, (int) y, (int) (x + frameWidth), (int) (y + frameHeight));
-
         canvas.drawBitmap(spriteSheet, src, dst, null);
     }
 
