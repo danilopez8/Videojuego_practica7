@@ -1,9 +1,12 @@
 package edu.example.videojuego_practica7;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.Rect;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -14,11 +17,27 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
 
     private SurfaceHolder surfaceHolder;
     private Thread gameThread;
-    private Player player;  // Usará la nueva versión de Player
     private Control derecha, izquierda, disparo, salto;  // Controles
     private boolean isRunning = false;
     private int pantallaAncho, pantallaAlto;
 
+    // Datos del jugador (antes en Player)
+    private Bitmap spriteSheet;
+    private float x, y;
+    private int frameActual = 0;
+    private int contadorFrames = 0;
+    private final int totalFrames = 4;  // Solo los frames correspondientes a la dirección
+    private int frameWidth, frameHeight;
+    private int columnas = 12;  // 12 frames en total (6 hacia la derecha y 6 hacia la izquierda)
+    private int filas = 1;     // Solo una fila
+
+    private float velocidadX = 10f;
+    private boolean moviendoDerecha = false;
+    private boolean moviendoIzquierda = false;
+
+    // Datos del fondo
+    private Bitmap fondo;  // Imagen del fondo
+    private float pos_inicial_mapa = 0;  // Posición inicial del fondo
 
     public EboraJuego(Context context) {
         super(context);
@@ -39,7 +58,16 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
 
     @Override
     public void surfaceCreated(@NonNull SurfaceHolder holder) {
-        player = new Player(getContext());  // Crea el personaje con la nueva lógica
+        // Inicializamos el sprite del jugador y su posición
+        spriteSheet = BitmapFactory.decodeResource(getResources(), R.drawable.player);  // Carga el sprite del jugador
+
+        // Calcular tamaño de cada frame correctamente
+        frameWidth = spriteSheet.getWidth() / columnas;
+        frameHeight = spriteSheet.getHeight() / filas;
+
+        // Posición inicial del personaje en pantalla
+        x = 100;
+        y = 300;
 
         // Obtén el tamaño de la pantalla
         pantallaAncho = getWidth();
@@ -100,7 +128,7 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
             try {
                 canvas = surfaceHolder.lockCanvas();
                 synchronized (surfaceHolder) {
-                    updateGame();
+                    actualizar();
                     drawGame(canvas);
                 }
             } finally {
@@ -111,22 +139,72 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
         }
     }
 
-    private void updateGame() {
+    public void renderizar(Canvas canvas) {
+        if (canvas != null) {
+            Paint mypaint = new Paint();
+            mypaint.setStyle(Paint.Style.STROKE);
+
+            // Limpiar la pantalla con un color de fondo (negro en este caso)
+            canvas.drawColor(Color.BLACK);
+
+            // Dibujar el fondo
+            canvas.drawBitmap(fondo, 0, 0, null);  // Dibujamos el fondo
+
+            // Dibujar al jugador
+            int srcX = frameWidth * frameActual;
+            int srcY = 0; // Solo hay una fila
+
+            Rect src = new Rect(srcX, srcY, srcX + frameWidth, srcY + frameHeight);
+            Rect dst = new Rect((int) x, (int) (y - frameHeight), (int) (x + frameWidth), (int) y);
+            canvas.drawBitmap(spriteSheet, src, dst, null);  // Dibuja el jugador
+
+            // Dibuja los controles
+            Paint paint = new Paint();
+            derecha.dibujar(canvas, paint);
+            izquierda.dibujar(canvas, paint);
+            disparo.dibujar(canvas, paint);
+            salto.dibujar(canvas, paint);
+        }
+    }
+
+    // Actualiza el estado del juego
+    public void actualizar() {
         // Mueve al jugador según los controles
         if (derecha.pulsado) {
-            player.moveRight();
+            moviendoDerecha = true;
+            moviendoIzquierda = false;
         } else if (izquierda.pulsado) {
-            player.moveLeft();
+            moviendoIzquierda = true;
+            moviendoDerecha = false;
         } else {
-            player.stopMoving();
+            moviendoDerecha = false;
+            moviendoIzquierda = false;
         }
+
         // Actualiza la animación del jugador
-        player.update();
+        if (moviendoDerecha) {
+            x += velocidadX;
+            frameActual = (frameActual + 1) % totalFrames;  // Ciclo entre los 4 frames hacia la derecha
+        } else if (moviendoIzquierda) {
+            x -= velocidadX;
+            frameActual = (frameActual + 1) % totalFrames + 4;  // Ciclo entre los 4 frames hacia la izquierda (los frames de la derecha son de 0 a 3, los de izquierda de 4 a 7)
+        }
+
+        if (!moviendoDerecha && !moviendoIzquierda) {
+            frameActual = 11; // Si está quieto, mostrar el último frame de la fila
+        }
     }
 
     private void drawGame(Canvas canvas) {
         canvas.drawColor(Color.WHITE);  // Limpia la pantalla
-        player.draw(canvas);             // Dibuja el jugador
+
+        // Dibujar el jugador
+        int srcX = frameWidth * frameActual;
+        int srcY = 0; // Solo hay una fila
+
+        Rect src = new Rect(srcX, srcY, srcX + frameWidth, srcY + frameHeight);
+        Rect dst = new Rect((int) x, (int) (y - frameHeight), (int) (x + frameWidth), (int) y);
+        canvas.drawBitmap(spriteSheet, src, dst, null);  // Dibuja el jugador
 
         // Dibuja los controles
         Paint paint = new Paint();

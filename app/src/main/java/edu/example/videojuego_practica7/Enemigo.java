@@ -26,7 +26,7 @@ public class Enemigo {
         this.sizeLevel = sizeLevel;
 
         // Cargar sprite de pompa
-        spriteSheet = BitmapFactory.decodeResource(context.getResources(), R.drawable.pompas);
+        spriteSheet = BitmapFactory.decodeResource(context.getResources(), R.drawable.bolas2);
 
         // Definir el tamaño de cada pompa según su nivel
         int totalFrames = 4; // Supongamos que hay 4 tamaños de pompa en la imagen
