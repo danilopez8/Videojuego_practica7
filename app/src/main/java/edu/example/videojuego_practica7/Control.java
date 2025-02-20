@@ -50,15 +50,21 @@ public class Control {
 
     // Comprobar si se ha soltado el control
     public void comprueba_soltado(ArrayList<Toque> lista){
+        // Si la lista es null o está vacía, consideramos que no hay toques y se suelta el botón.
+        if (lista == null || lista.isEmpty()){
+            pulsado = false;
+            return;
+        }
         boolean aux = false;
-        for (Toque t : lista){
+        for(Toque t: lista){
             if(t.x > coordenada_x && t.x < coordenada_x + Ancho() &&
                     t.y > coordenada_y && t.y < coordenada_y + Alto()){
                 aux = true;
             }
         }
-        if (!aux){
+        if(!aux){
             pulsado = false;
         }
     }
+
 }
