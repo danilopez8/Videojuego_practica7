@@ -4,84 +4,76 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
+import android.graphics.Rect;
 
+public class Player {
+    private Bitmap spriteSheet;
+    private float x, y;
+    private int frameActual = 0;
+    private int contadorFrames = 0;
+    private final int totalFrames = 8;  // Ahora hay 8 frames en una fila
 
+    private int frameWidth, frameHeight;
+    private int columnas = 8; // Número de columnas en el sprite sheet
+    private int filas = 1; // Ahora solo hay una fila
 
-    public class Player {
+    private float velocidadX = 10f;
+    private boolean moviendoDerecha = false;
+    private boolean moviendoIzquierda = false;
 
-        private Context context;
-        private Bitmap sprite;  // Imagen del personaje
-        private float x, y;  // Posición en la pantalla
-        private float speed = 10;  // Velocidad del personaje
-        private int width, height;
-        private boolean isMovingRight = false;
-        private boolean isMovingLeft = false;
-        private boolean isJumping = false;
-        private boolean isShooting = false;
+    public Player(Context context) {
+        spriteSheet = BitmapFactory.decodeResource(context.getResources(), R.drawable.player);
 
-        public Player(Context context) {
-            this.context = context;
-            sprite = BitmapFactory.decodeResource(context.getResources(), R.drawable.personajes);  // Cargar el sprite
-            width = sprite.getWidth();
-            height = sprite.getHeight();
-            x = 100;  // Posición inicial en X
-            y = 300;  // Posición inicial en Y
+        // Calcular tamaño de cada frame correctamente
+        frameWidth = spriteSheet.getWidth() / columnas;
+        frameHeight = spriteSheet.getHeight() / filas;
+
+        // Posición inicial del personaje en pantalla
+        x = 100;
+        y = 300;
+    }
+
+    public void update() {
+        if (moviendoDerecha) {
+            x += velocidadX;
+        } else if (moviendoIzquierda) {
+            x -= velocidadX;
         }
 
-        // Método para actualizar la posición del personaje
-        public void update() {
-            if (isMovingRight) {
-                x += speed;  // Mueve a la derecha
+        // Cambiar frame solo si se está moviendo
+        if (moviendoDerecha || moviendoIzquierda) {
+            contadorFrames++;
+            if (contadorFrames % 6 == 0) {
+                frameActual = (frameActual + 1) % totalFrames;
             }
-            if (isMovingLeft) {
-                x -= speed;  // Mueve a la izquierda
-            }
-            if (isJumping) {
-                // Lógica de salto
-                y -= speed;
-            }
+        } else {
+            frameActual = 0; // Si está quieto, mostrar el primer frame
         }
+    }
 
-        // Método para mover al personaje hacia la derecha
-        public void moveRight() {
-            isMovingRight = true;
-            isMovingLeft = false;
-        }
+    public void draw(Canvas canvas) {
+        // **Corrección del recorte**
+        int srcX = frameWidth * frameActual;
+        int srcY = 0; // Solo hay una fila
 
-        // Método para mover al personaje hacia la izquierda
-        public void moveLeft() {
-            isMovingLeft = true;
-            isMovingRight = false;
-        }
+        Rect src = new Rect(srcX, srcY, srcX + frameWidth, srcY + frameHeight);
+        Rect dst = new Rect((int) x, (int) (y - frameHeight), (int) (x + frameWidth), (int) y);
 
-        // Método para disparar
-        public void shoot() {
-            isShooting = true;
-            // Aquí puedes agregar la lógica para disparar
-        }
+        canvas.drawBitmap(spriteSheet, src, dst, null);
+    }
 
-        // Método para saltar
-        public void jump() {
-            isJumping = true;
-            // Aquí puedes agregar la lógica para el salto (como velocidad de salto, gravedad, etc.)
-        }
+    public void moveRight() {
+        moviendoDerecha = true;
+        moviendoIzquierda = false;
+    }
 
-        // Método para dibujar el personaje en la pantalla
-        public void draw(Canvas canvas) {
-            canvas.drawBitmap(sprite, x, y, null);  // Dibuja el sprite en la posición actual
-        }
+    public void moveLeft() {
+        moviendoIzquierda = true;
+        moviendoDerecha = false;
+    }
 
-        // Métodos para detener las acciones
-        public void stopMoving() {
-            isMovingLeft = false;
-            isMovingRight = false;
-        }
-
-        public void stopJumping() {
-            isJumping = false;
-        }
-
-        public void stopShooting() {
-            isShooting = false;
-        }
+    public void stopMoving() {
+        moviendoDerecha = false;
+        moviendoIzquierda = false;
+    }
 }
