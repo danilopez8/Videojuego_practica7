@@ -11,11 +11,11 @@ public class Player {
     private float x, y;
     private int frameActual = 0;
     private int contadorFrames = 0;
-    private final int totalFrames = 8;  // Ahora hay 8 frames en una fila
+    private final int totalFrames = 4;  // Solo los frames correspondientes a la dirección
 
     private int frameWidth, frameHeight;
-    private int columnas = 8; // Número de columnas en el sprite sheet
-    private int filas = 1; // Ahora solo hay una fila
+    private int columnas = 12;  // 8 frames en total
+    private int filas = 1;     // Solo una fila
 
     private float velocidadX = 10f;
     private boolean moviendoDerecha = false;
@@ -36,23 +36,19 @@ public class Player {
     public void update() {
         if (moviendoDerecha) {
             x += velocidadX;
+            frameActual = (frameActual + 1) % totalFrames;  // Ciclo entre los 4 frames hacia la derecha
         } else if (moviendoIzquierda) {
             x -= velocidadX;
+            frameActual = (frameActual + 1) % totalFrames + 4;  // Ciclo entre los 4 frames hacia la izquierda (los frames de la derecha son de 0 a 3, los de izquierda de 4 a 7)
         }
 
         // Cambiar frame solo si se está moviendo
-        if (moviendoDerecha || moviendoIzquierda) {
-            contadorFrames++;
-            if (contadorFrames % 6 == 0) {
-                frameActual = (frameActual + 1) % totalFrames;
-            }
-        } else {
-            frameActual = 0; // Si está quieto, mostrar el primer frame
+        if (!moviendoDerecha && !moviendoIzquierda) {
+            frameActual = 11; // Si está quieto, mostrar el primer frame
         }
     }
 
     public void draw(Canvas canvas) {
-        // **Corrección del recorte**
         int srcX = frameWidth * frameActual;
         int srcY = 0; // Solo hay una fila
 
