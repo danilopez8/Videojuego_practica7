@@ -8,7 +8,7 @@ import android.graphics.Canvas;
 public class Disparo {
     private Bitmap imagen;
     private float x, y;
-    private float velocidadY = -20;  // Velocidad del disparo (hacia arriba)
+    private float velocidadY = -15;  // Velocidad del disparo (hacia arriba)
     private EboraJuego juego;
     private int ancho, alto;
 
@@ -30,7 +30,8 @@ public class Disparo {
     }
 
     public void draw(Canvas canvas) {
-        canvas.drawBitmap(imagen, x - ancho / 2, y, null);
+
+        canvas.drawBitmap(imagen, x - ancho / 2, y-alto, null);
     }
 
     public boolean colisionaCon(Enemigo pompa) {
