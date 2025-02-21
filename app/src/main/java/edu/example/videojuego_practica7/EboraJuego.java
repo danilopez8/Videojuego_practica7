@@ -307,8 +307,13 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
     }
 
     private void crearDisparo() {
-        float disparoX = x + frameWidth / 2;
-        float disparoY = y;
+        // Centrado horizontalmente en el personaje
+        float disparoX = x + (frameWidth / 2);
+
+        // Que el disparo salga desde la parte superior del sprite
+        float disparoY = y - frameHeight;
+
+        // Crear el disparo con esas coordenadas
         listaDisparos.add(new Disparo(getContext(), this, disparoX, disparoY));
     }
 
