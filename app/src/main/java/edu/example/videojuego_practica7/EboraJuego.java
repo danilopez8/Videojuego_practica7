@@ -13,6 +13,9 @@ import android.view.SurfaceView;
 
 import androidx.annotation.NonNull;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+
 public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, Runnable {
 
     private SurfaceHolder surfaceHolder;
@@ -25,12 +28,10 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
     private Bitmap spriteSheet, fondoSprite;
     private float x, y;
     private int frameActual = 0;
-    private int contadorFrames = 0;
     private final int totalFrames = 4;  // Solo los frames correspondientes a la dirección
     private int frameWidth, frameHeight;
     private int columnas = 12;  // 12 frames en total (6 hacia la derecha y 6 hacia la izquierda)
     private int filas = 1;     // Solo una fila
-
     private float velocidadX = 10f;
     private boolean moviendoDerecha = false;
     private boolean moviendoIzquierda = false;
@@ -45,9 +46,13 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
     private Bitmap fondo;  // Imagen del fondo
     private float pos_inicial_mapa = 0;  // Posición inicial del fondo
 
+    // Lista de disparos
+    private ArrayList<Disparo> listaDisparos = new ArrayList<>();
+    private final int FRAMES_ENTRE_DISPAROS = 20; // Cooldown entre disparos
+    private int framesDesdeUltimoDisparo = 0;
 
-
-
+    // Lista de enemigos (pompas)
+    private ArrayList<Enemigo> listaPompas = new ArrayList<>();
 
     public EboraJuego(Context context) {
         super(context);
@@ -55,7 +60,7 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
         surfaceHolder.addCallback(this);  // Establece el listener
         setFocusable(true);  // Permite recibir eventos de teclado o pantalla táctil
 
-        // Inicializar los controles (ajusta las posiciones según sea necesario)
+        // Inicializar los controles
         derecha = new Control(context, 0, 0);
         derecha.cargarImagen(R.drawable.alante);
         izquierda = new Control(context, 0, 0);
@@ -68,18 +73,17 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
 
     @Override
     public void surfaceCreated(@NonNull SurfaceHolder holder) {
-        // Primero, obtener el tamaño de la pantalla
+        // Obtener el tamaño de la pantalla
         pantallaAncho = getWidth();
         pantallaAlto = getHeight();
+
         // Inicializamos el sprite del jugador y su posición
         spriteSheet = BitmapFactory.decodeResource(getResources(), R.drawable.player);  // Carga el sprite del jugador
 
-        // Quiero duplicar su tamaño
+        // Escalar el bitmap
         float escala = 2.0f;
         int newWidth = (int) (spriteSheet.getWidth() * escala);
         int newHeight = (int) (spriteSheet.getHeight() * escala);
-
-        // Escalo el bitmap
         spriteSheet = Bitmap.createScaledBitmap(spriteSheet, newWidth, newHeight, false);
 
         // Calcular tamaño de cada frame correctamente
@@ -88,18 +92,14 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
 
         // Posición inicial del personaje en pantalla
         x = 50;
-        y = pantallaAlto;
+        y = pantallaAlto - frameHeight;
 
         // Cargar el sprite con los 3 fondos
         fondoSprite = BitmapFactory.decodeResource(getResources(), R.drawable.fondo);
 
         // Calcular el ancho/alto de cada fondo
         fondoFrameAncho = fondoSprite.getWidth() / fondoColumnas;  // 3 columnas
-        fondoFrameAlto  = fondoSprite.getHeight() / fondoFilas;    // 1 fila
-
-        // Obtén el tamaño de la pantalla
-        pantallaAncho = getWidth();
-        pantallaAlto = getHeight();
+        fondoFrameAlto = fondoSprite.getHeight() / fondoFilas;     // 1 fila
 
         // Ajustar la posición de los controles según el tamaño de la pantalla
         ajustarControles();
@@ -108,28 +108,31 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
         gameThread = new Thread(this);
         isRunning = true;
         gameThread.start();
+
+        // Spawnea una pompa grande al inicio
+        spawnPompa();
     }
 
     private void ajustarControles() {
         float aux;
 
-        //flecha_izda
+        // Flecha izquierda
         izquierda = new Control(getContext(), 50, pantallaAlto - 200);  // Posición en la parte inferior izquierda
         izquierda.cargarImagen(R.drawable.atras);  // Imagen de flecha izquierda
         izquierda.nombre = "IZQUIERDA";  // Nombre del control
 
-        //flecha_derecha
+        // Flecha derecha
         derecha = new Control(getContext(), 50 + izquierda.Ancho(), pantallaAlto - 200);  // Colocamos la flecha derecha justo al lado de la izquierda
         derecha.cargarImagen(R.drawable.alante);  // Imagen de flecha derecha
         derecha.nombre = "DERECHA";  // Nombre del control
 
-        //disparo (colocamos en el 5/7 del ancho)
+        // Botón de disparo
         aux = pantallaAncho - 460;  // Coloca el botón de disparo en la parte inferior derecha, ajustado
         disparo = new Control(getContext(), aux, pantallaAlto - 200);  // Colocamos el botón de disparo
         disparo.cargarImagen(R.drawable.disparo);
         disparo.nombre = "DISPARO";  // Nombre del control
 
-        //salto (colocamos en el 4/7 del ancho)
+        // Botón de salto
         aux = pantallaAncho - 250;  // Coloca el botón de salto justo a la izquierda de disparo
         salto = new Control(getContext(), aux, pantallaAlto - 200);  // Colocamos el botón de salto
         salto.cargarImagen(R.drawable.salto);
@@ -158,7 +161,6 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
                 synchronized (surfaceHolder) {
                     actualizar();
                     drawGame(canvas);
-                    renderizar(canvas);
                 }
             } finally {
                 if (canvas != null) {
@@ -167,7 +169,6 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
             }
         }
     }
-
     public void renderizar(Canvas canvas) {
         if (canvas != null) {
             Paint mypaint = new Paint();
@@ -176,21 +177,18 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
             // Limpiar la pantalla con un color de fondo (negro)
             canvas.drawColor(Color.BLACK);
 
-            // -- DIBUJAR EL FONDO --
-            // Por ejemplo, dibujamos el primer fondo (fondoActual = 0)
-            int srcX = fondoFrameAncho * fondoActual;           // inicio en x
-            int srcY = 0;                                       // una sola fila
+            // DIBUJAR EL FONDO
+            int srcX = fondoFrameAncho * fondoActual;  // inicio en x
+            int srcY = 0;                              // una sola fila
             Rect srcFondo = new Rect(srcX, srcY,
                     srcX + fondoFrameAncho,    // fin en x
                     srcY + fondoFrameAlto);    // fin en y
 
             // Escalamos el fondo a todo el ancho/alto de la pantalla
             Rect dstFondo = new Rect(0, 0, pantallaAncho, pantallaAlto);
-
-            // Dibujamos el pedazo del sprite
             canvas.drawBitmap(fondoSprite, srcFondo, dstFondo, null);
 
-            // -- DIBUJAR EL JUGADOR --
+            // DIBUJAR EL JUGADOR
             int srcXjug = frameWidth * frameActual;
             int srcYjug = 0;
 
@@ -203,7 +201,7 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
 
             canvas.drawBitmap(spriteSheet, srcJugador, dstJugador, null);
 
-            // -- DIBUJAR CONTROLES --
+            // DIBUJAR CONTROLES
             Paint paint = new Paint();
             derecha.dibujar(canvas, paint);
             izquierda.dibujar(canvas, paint);
@@ -212,7 +210,6 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
         }
     }
 
-    // Actualiza el estado del juego
     public void actualizar() {
         // Mueve al jugador según los controles
         if (derecha.pulsado) {
@@ -232,33 +229,74 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
             frameActual = (frameActual + 1) % totalFrames;  // Ciclo entre los 4 frames hacia la derecha
         } else if (moviendoIzquierda) {
             x -= velocidadX;
-            frameActual = (frameActual + 1) % totalFrames + 4;  // Ciclo entre los 4 frames hacia la izquierda (los frames de la derecha son de 0 a 3, los de izquierda de 4 a 7)
+            frameActual = (frameActual + 1) % totalFrames + 4;  // Ciclo entre los 4 frames hacia la izquierda
         }
-
         if (!moviendoDerecha && !moviendoIzquierda) {
             frameActual = 11; // Si está quieto, mostrar el último frame de la fila
         }
+
+        // Maneja los disparos
+        framesDesdeUltimoDisparo++;
+        if (disparo.pulsado && framesDesdeUltimoDisparo >= FRAMES_ENTRE_DISPAROS) {
+            crearDisparo();
+            framesDesdeUltimoDisparo = 0;
+        }
+
+        // Actualiza los disparos
+        Iterator<Disparo> itDisparo = listaDisparos.iterator();
+        while (itDisparo.hasNext()) {
+            Disparo d = itDisparo.next();
+            d.update();
+            if (d.fueraDePantalla()) {
+                itDisparo.remove();
+            }
+        }
+
+        // Actualiza las pompas
+        for (Enemigo pompa : listaPompas) {
+            pompa.update();
+        }
+
+        // Verifica colisiones entre disparos y pompas
+        verificarColisionDisparos();
     }
 
     private void drawGame(Canvas canvas) {
         canvas.drawColor(Color.WHITE);  // Limpia la pantalla
 
-        // Dibujar el jugador
-        int srcX = frameWidth * frameActual;
-        int srcY = 0; // Solo hay una fila
+        // Dibuja el fondo
+        int srcX = fondoFrameAncho * fondoActual;  // inicio en x
+        int srcY = 0;                              // una sola fila
+        Rect srcFondo = new Rect(srcX, srcY,
+                srcX + fondoFrameAncho,    // fin en x
+                srcY + fondoFrameAlto);    // fin en y
 
-        // Recortamos ese frame del sprite del jugador
-        Rect srcJugador = new Rect(srcX, srcY, srcX + frameWidth, srcY + frameHeight);
+        // Escalamos el fondo a todo el ancho/alto de la pantalla
+        Rect dstFondo = new Rect(0, 0, pantallaAncho, pantallaAlto);
+        canvas.drawBitmap(fondoSprite, srcFondo, dstFondo, null);
 
-        // Como 'y' es la posición de los pies, el top es (y - frameHeight)
-        Rect dstJugador = new Rect(
-                (int) x,
-                (int) (y - frameHeight),
-                (int) (x + frameWidth),
-                (int) y
-        );
+        // Dibuja al jugador
+        int srcXjug = frameWidth * frameActual;
+        int srcYjug = 0;
+
+        Rect srcJugador = new Rect(srcXjug, srcYjug,
+                srcXjug + frameWidth,
+                srcYjug + frameHeight);
+
+        Rect dstJugador = new Rect((int) x, (int) (y - frameHeight),
+                (int) (x + frameWidth), (int) y);
 
         canvas.drawBitmap(spriteSheet, srcJugador, dstJugador, null);
+
+        // Dibuja los disparos
+        for (Disparo d : listaDisparos) {
+            d.draw(canvas);
+        }
+
+        // Dibuja las pompas
+        for (Enemigo pompa : listaPompas) {
+            pompa.draw(canvas);
+        }
 
         // Dibuja los controles
         Paint paint = new Paint();
@@ -268,17 +306,54 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
         salto.dibujar(canvas, paint);
     }
 
+    private void crearDisparo() {
+        float disparoX = x + frameWidth / 2;
+        float disparoY = y;
+        listaDisparos.add(new Disparo(getContext(), this, disparoX, disparoY));
+    }
+
+    private void verificarColisionDisparos() {
+        Iterator<Disparo> itDisparo = listaDisparos.iterator();
+        while (itDisparo.hasNext()) {
+            Disparo d = itDisparo.next();
+            Iterator<Enemigo> itPompa = listaPompas.iterator();
+            while (itPompa.hasNext()) {
+                Enemigo pompa = itPompa.next();
+                if (d.colisionaCon(pompa)) {
+                    Enemigo[] nuevasPompas = pompa.dividir();
+                    if (nuevasPompas != null) {
+                        for (Enemigo p : nuevasPompas) {
+                            listaPompas.add(p);
+                        }
+                    }
+                    itPompa.remove();
+                    itDisparo.remove();
+                    break;
+                }
+            }
+        }
+    }
+
+    private void spawnPompa() {
+        int screenWidth = getWidth();
+        float posX = (float) (Math.random() * (screenWidth - 100)) + 50;
+        float posY = 0;
+        int sizeLevel = 3; // Pompa grande
+        Enemigo nuevaPompa = new Enemigo(getContext(), this, sizeLevel, posX, posY);
+        listaPompas.add(nuevaPompa);
+    }
+
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         int action = event.getAction();
-        int x = (int) event.getX();
-        int y = (int) event.getY();
+        int ex = (int) event.getX();
+        int ey = (int) event.getY();
 
         // Verifica qué control fue presionado
-        derecha.comprueba_pulsado(x, y);
-        izquierda.comprueba_pulsado(x, y);
-        disparo.comprueba_pulsado(x, y);
-        salto.comprueba_pulsado(x, y);
+        derecha.comprueba_pulsado(ex, ey);
+        izquierda.comprueba_pulsado(ex, ey);
+        disparo.comprueba_pulsado(ex, ey);
+        salto.comprueba_pulsado(ex, ey);
 
         // Al soltar, se comprueba que se hayan soltado los controles
         if (action == MotionEvent.ACTION_UP) {
@@ -288,5 +363,9 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
             salto.comprueba_soltado(null);
         }
         return true;
+    }
+
+    public void eliminarDisparo(Disparo d) {
+        listaDisparos.remove(d);
     }
 }

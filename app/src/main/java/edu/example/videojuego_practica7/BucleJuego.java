@@ -61,5 +61,7 @@ public class BucleJuego {
     public void fin(){
         JuegoEnEjecucion=false;
     }
+
+
 }
 

@@ -4,9 +4,7 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
-import android.graphics.Paint;
 import android.graphics.Rect;
-
 import java.util.Random;
 
 public class Enemigo {
@@ -14,61 +12,56 @@ public class Enemigo {
     private float x, y;
     private float velocidadX, velocidadY;
     private int frameWidth, frameHeight;
-    private int sizeLevel; // Tamaño de la pompa (de grande a pequeña)
+    private int sizeLevel; // Tamaño de la pompa: 3 = grande, 2 = mediana, 1 = pequeña
     private EboraJuego juego;
-
     private static final int GRAVEDAD = 1;
     private static final int MAX_SIZE_LEVEL = 3; // Nivel máximo
+    private Random rand;
 
     public Enemigo(Context context, EboraJuego juego, int sizeLevel, float startX, float startY) {
         this.juego = juego;
         this.sizeLevel = sizeLevel;
-
-        // Cargar sprite de pompas (asegúrate de que R.drawable.pompas es la imagen correcta)
-        spriteSheet = BitmapFactory.decodeResource(context.getResources(), R.drawable.bolas2);
-
-        // Se asume que la imagen tiene 4 frames de diferentes tamaños
-        int totalFrames = 4;
-        frameWidth = spriteSheet.getWidth() / totalFrames;
-        frameHeight = spriteSheet.getHeight();
-
-        // Posición inicial
+        rand = new Random();
         x = startX;
         y = startY;
-
-        // Velocidades aleatorias
-        Random rand = new Random();
         velocidadX = rand.nextFloat() * 5 + 2;
         velocidadY = 0;
+        // Cargar la imagen según el nivel de tamaño
+        spriteSheet = BitmapFactory.decodeResource(context.getResources(), getResourceForSizeLevel(sizeLevel));
+        // Se asume que la imagen se usa completa (sin recorte)
+        frameWidth = spriteSheet.getWidth();
+        frameHeight = spriteSheet.getHeight();
+    }
+
+    private int getResourceForSizeLevel(int level) {
+        if (level == 3) {
+            return R.drawable.bolas4;  // Pompa grande
+        } else if (level == 2) {
+            return R.drawable.bolas3;  // Pompa mediana
+        } else {
+            return R.drawable.bolas2;  // Pompa pequeña
+        }
     }
 
     public void update() {
-        // Movimiento vertical (caída)
         velocidadY += GRAVEDAD;
         y += velocidadY;
-
-        // Movimiento horizontal
         x += velocidadX;
-
-        // Rebote en los bordes
         if (x <= 0 || x + frameWidth >= juego.getWidth()) {
             velocidadX *= -1;
         }
-
-        // Rebote en el suelo
         if (y + frameHeight >= juego.getHeight()) {
             y = juego.getHeight() - frameHeight;
             velocidadY = -velocidadY * 0.8f;
         }
+        if (y <= 0) {
+            y = 0;
+            velocidadY *= -1;
+        }
     }
 
     public void draw(Canvas canvas) {
-        // Seleccionar el frame según el tamaño: si sizeLevel = 3 (grande), se usará frame 0; si 2, frame 1; si 1, frame 2
-        int frameIndex = MAX_SIZE_LEVEL - sizeLevel;
-        int srcX = frameWidth * frameIndex;
-        Rect src = new Rect(srcX, 0, srcX + frameWidth, frameHeight);
-        Rect dst = new Rect((int) x, (int) y, (int) (x + frameWidth), (int) (y + frameHeight));
-        canvas.drawBitmap(spriteSheet, src, dst, null);
+        canvas.drawBitmap(spriteSheet, x, y, null);
     }
 
     public boolean colisionaCon(float px, float py) {
@@ -77,12 +70,30 @@ public class Enemigo {
 
     public Enemigo[] dividir() {
         if (sizeLevel > 1) {
-            return new Enemigo[]{
-                    new Enemigo(juego.getContext(), juego, sizeLevel - 1, x - frameWidth / 2, y),
-                    new Enemigo(juego.getContext(), juego, sizeLevel - 1, x + frameWidth / 2, y)
-            };
+            Enemigo[] nuevas = new Enemigo[2];
+            float offset = frameWidth / 4f;
+            nuevas[0] = new Enemigo(juego.getContext(), juego, sizeLevel - 1, x - offset, y);
+            nuevas[1] = new Enemigo(juego.getContext(), juego, sizeLevel - 1, x + offset, y);
+            return nuevas;
         }
         return null;
+    }
+
+    // Getters para colisiones
+    public float getX() {
+        return x;
+    }
+
+    public float getY() {
+        return y;
+    }
+
+    public int getAncho() {
+        return frameWidth;
+    }
+
+    public int getAlto() {
+        return frameHeight;
     }
 
     public int getSizeLevel() {
