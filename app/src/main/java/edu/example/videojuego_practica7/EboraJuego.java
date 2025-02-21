@@ -54,6 +54,9 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
     // Lista de enemigos (pompas)
     private ArrayList<Enemigo> listaPompas = new ArrayList<>();
 
+    // Límites del movimiento del jugador
+    private int limiteIzquierdo, limiteDerecho, limiteSuperior, limiteInferior;
+
     public EboraJuego(Context context) {
         super(context);
         surfaceHolder = getHolder();
@@ -93,6 +96,13 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
         // Posición inicial del personaje en pantalla
         x = 50;
         y = pantallaAlto - frameHeight;
+
+        // Límites del movimiento del jugador en base a la pantalla y los margees verdesd de la imagen
+        limiteIzquierdo = 40;
+        limiteDerecho = pantallaAncho - 40;
+        limiteSuperior = 50;
+        limiteInferior = pantallaAlto - 50;
+
 
         // Cargar el sprite con los 3 fondos
         fondoSprite = BitmapFactory.decodeResource(getResources(), R.drawable.fondo);
@@ -240,6 +250,26 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
         if (disparo.pulsado && framesDesdeUltimoDisparo >= FRAMES_ENTRE_DISPAROS) {
             crearDisparo();
             framesDesdeUltimoDisparo = 0;
+        }
+
+        // ---- LÓGICA DE LÍMITES HORIZONTALES ----
+        // Recuerda que "x" en tu código es la posición de los pies en horizontal.
+        // Tu sprite se dibuja en [x, x + frameWidth].
+        // Si quieres que el jugador no salga del marco:
+        if (x < limiteIzquierdo) {
+            x = limiteIzquierdo;
+        }
+        if (x + frameWidth > limiteDerecho) {
+            x = limiteDerecho - frameWidth;
+        }
+
+        // ---- LÓGICA DE LÍMITES VERTICALES (si aplicas salto o movimiento vertical) ----
+        // Suponiendo que "y" es la posición del "suelo" del sprite:
+        if (y - frameHeight < limiteSuperior) {
+            y = limiteSuperior + frameHeight;
+        }
+        if (y > limiteInferior) {
+            y = limiteInferior;
         }
 
         // Actualiza los disparos
