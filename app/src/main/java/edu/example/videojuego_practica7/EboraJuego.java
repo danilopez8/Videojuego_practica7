@@ -22,7 +22,7 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
     private int pantallaAncho, pantallaAlto;
 
     // Datos del jugador (antes en Player)
-    private Bitmap spriteSheet;
+    private Bitmap spriteSheet, fondoSprite;
     private float x, y;
     private int frameActual = 0;
     private int contadorFrames = 0;
@@ -35,9 +35,19 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
     private boolean moviendoDerecha = false;
     private boolean moviendoIzquierda = false;
 
+    // Para el fondo
+    private int fondoFrameAncho, fondoFrameAlto; // Dimensiones de cada fondo
+    private int fondoColumnas = 3;  // Tienes 3 fondos en horizontal
+    private int fondoFilas = 1;     // Solo 1 fila
+    private int fondoActual = 0;    // Índice del fondo que se va a dibujar (0, 1 o 2)
+
     // Datos del fondo
     private Bitmap fondo;  // Imagen del fondo
     private float pos_inicial_mapa = 0;  // Posición inicial del fondo
+
+
+
+
 
     public EboraJuego(Context context) {
         super(context);
@@ -58,16 +68,34 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
 
     @Override
     public void surfaceCreated(@NonNull SurfaceHolder holder) {
+        // Primero, obtener el tamaño de la pantalla
+        pantallaAncho = getWidth();
+        pantallaAlto = getHeight();
         // Inicializamos el sprite del jugador y su posición
         spriteSheet = BitmapFactory.decodeResource(getResources(), R.drawable.player);  // Carga el sprite del jugador
+
+        // Quiero duplicar su tamaño
+        float escala = 2.0f;
+        int newWidth = (int) (spriteSheet.getWidth() * escala);
+        int newHeight = (int) (spriteSheet.getHeight() * escala);
+
+        // Escalo el bitmap
+        spriteSheet = Bitmap.createScaledBitmap(spriteSheet, newWidth, newHeight, false);
 
         // Calcular tamaño de cada frame correctamente
         frameWidth = spriteSheet.getWidth() / columnas;
         frameHeight = spriteSheet.getHeight() / filas;
 
         // Posición inicial del personaje en pantalla
-        x = 100;
-        y = 300;
+        x = 50;
+        y = pantallaAlto;
+
+        // Cargar el sprite con los 3 fondos
+        fondoSprite = BitmapFactory.decodeResource(getResources(), R.drawable.fondo);
+
+        // Calcular el ancho/alto de cada fondo
+        fondoFrameAncho = fondoSprite.getWidth() / fondoColumnas;  // 3 columnas
+        fondoFrameAlto  = fondoSprite.getHeight() / fondoFilas;    // 1 fila
 
         // Obtén el tamaño de la pantalla
         pantallaAncho = getWidth();
@@ -130,6 +158,7 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
                 synchronized (surfaceHolder) {
                     actualizar();
                     drawGame(canvas);
+                    renderizar(canvas);
                 }
             } finally {
                 if (canvas != null) {
@@ -144,21 +173,37 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
             Paint mypaint = new Paint();
             mypaint.setStyle(Paint.Style.STROKE);
 
-            // Limpiar la pantalla con un color de fondo (negro en este caso)
+            // Limpiar la pantalla con un color de fondo (negro)
             canvas.drawColor(Color.BLACK);
 
-            // Dibujar el fondo
-            canvas.drawBitmap(fondo, 0, 0, null);  // Dibujamos el fondo
+            // -- DIBUJAR EL FONDO --
+            // Por ejemplo, dibujamos el primer fondo (fondoActual = 0)
+            int srcX = fondoFrameAncho * fondoActual;           // inicio en x
+            int srcY = 0;                                       // una sola fila
+            Rect srcFondo = new Rect(srcX, srcY,
+                    srcX + fondoFrameAncho,    // fin en x
+                    srcY + fondoFrameAlto);    // fin en y
 
-            // Dibujar al jugador
-            int srcX = frameWidth * frameActual;
-            int srcY = 0; // Solo hay una fila
+            // Escalamos el fondo a todo el ancho/alto de la pantalla
+            Rect dstFondo = new Rect(0, 0, pantallaAncho, pantallaAlto);
 
-            Rect src = new Rect(srcX, srcY, srcX + frameWidth, srcY + frameHeight);
-            Rect dst = new Rect((int) x, (int) (y - frameHeight), (int) (x + frameWidth), (int) y);
-            canvas.drawBitmap(spriteSheet, src, dst, null);  // Dibuja el jugador
+            // Dibujamos el pedazo del sprite
+            canvas.drawBitmap(fondoSprite, srcFondo, dstFondo, null);
 
-            // Dibuja los controles
+            // -- DIBUJAR EL JUGADOR --
+            int srcXjug = frameWidth * frameActual;
+            int srcYjug = 0;
+
+            Rect srcJugador = new Rect(srcXjug, srcYjug,
+                    srcXjug + frameWidth,
+                    srcYjug + frameHeight);
+
+            Rect dstJugador = new Rect((int) x, (int) (y - frameHeight),
+                    (int) (x + frameWidth), (int) y);
+
+            canvas.drawBitmap(spriteSheet, srcJugador, dstJugador, null);
+
+            // -- DIBUJAR CONTROLES --
             Paint paint = new Paint();
             derecha.dibujar(canvas, paint);
             izquierda.dibujar(canvas, paint);
@@ -202,9 +247,18 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
         int srcX = frameWidth * frameActual;
         int srcY = 0; // Solo hay una fila
 
-        Rect src = new Rect(srcX, srcY, srcX + frameWidth, srcY + frameHeight);
-        Rect dst = new Rect((int) x, (int) (y - frameHeight), (int) (x + frameWidth), (int) y);
-        canvas.drawBitmap(spriteSheet, src, dst, null);  // Dibuja el jugador
+        // Recortamos ese frame del sprite del jugador
+        Rect srcJugador = new Rect(srcX, srcY, srcX + frameWidth, srcY + frameHeight);
+
+        // Como 'y' es la posición de los pies, el top es (y - frameHeight)
+        Rect dstJugador = new Rect(
+                (int) x,
+                (int) (y - frameHeight),
+                (int) (x + frameWidth),
+                (int) y
+        );
+
+        canvas.drawBitmap(spriteSheet, srcJugador, dstJugador, null);
 
         // Dibuja los controles
         Paint paint = new Paint();
