@@ -1,6 +1,9 @@
 package edu.example.videojuego_practica7;
 
+import android.app.Activity;
 import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
@@ -13,6 +16,7 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -490,7 +494,7 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
         for (Disparo d : listaDisparos) {
             for (Enemigo pompa : listaPompas) {
                 if (d.colisionaCon(pompa)) {
-                    // Reproducir el sonido de "burbuja_pop.mp3" al dividir la pompa
+                    // Reproducir sonido de "burbuja_pop.mp3" al dividir la pompa
                     MediaPlayer mp = MediaPlayer.create(getContext(), R.raw.burbuja_pop);
                     mp.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
                         @Override
@@ -501,52 +505,46 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
                     mp.start();
 
                     // Dividir la pompa
-                    Enemigo[] splitted = pompa.dividir();
-                    if (splitted != null) {
-                        for (Enemigo e : splitted) {
+                    Enemigo[] nuevasPompas = pompa.dividir();
+                    if (nuevasPompas != null) {
+                        for (Enemigo e : nuevasPompas) {
                             pompasNuevas.add(e);
                         }
                     }
                     pompasEliminar.add(pompa);
                     disparosEliminar.add(d);
                     // Rompe el bucle de pompas para este disparo
-                    // Incrementamos el contador de enemigos eliminados
-
                     break;
                 }
             }
         }
-        // Eliminamos las pompas y disparos marcados
         listaPompas.removeAll(pompasEliminar);
         listaDisparos.removeAll(disparosEliminar);
-        // Añadimos las nuevas pompas resultantes de dividir
         listaPompas.addAll(pompasNuevas);
 
-        // Si ya no quedan enemigos en pantalla, pasar al siguiente nivel
+        // Si ya no quedan pompas, pasa al siguiente nivel
         if (listaPompas.isEmpty()) {
             pasarAlSiguienteNivel();
         }
     }
 
+
     private void pasarAlSiguienteNivel() {
         nivel++;
-        // Cambia el fondo: asumiendo que el sprite de fondo tiene sus frames en orden,
-        // el nivel 2 utilizará el segundo frame (índice 1), etc.
-        fondoActual = nivel - 1;  // Por ejemplo: nivel 2 -> fondoActual=1
-
-        // Incrementa la cantidad de enemigos (puedes ajustar la fórmula)
-        enemigosPorNivel += 5;
-        // Resetea el contador de enemigos eliminados
+        if (nivel > 3) {  // Si ya completó 3 niveles
+            ganar();
+            return;
+        }
+        fondoActual = nivel - 1;
+        enemigosPorNivel = (nivel * 1) + 0;
         enemigosEliminados = 0;
-
-        // Opcional: limpia la lista de pompas (si deseas reiniciar la acción)
         listaPompas.clear();
-
-        // Spawnea los nuevos enemigos para el nuevo nivel
         for (int i = 0; i < enemigosPorNivel; i++) {
             spawnPompa();
         }
     }
+
+
 
 
     private void quitarVida() {
@@ -579,15 +577,14 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
     private void spawnPompa() {
         int screenWidth = getWidth();
         float posX = (float) (Math.random() * (screenWidth - 100)) + 50;
-        float posY = 0;
+        float posY = 0; // Aparece en la parte superior
         int sizeLevel = 3; // Pompa grande
-
-        // Factor de velocidad según el nivel, p.ej. un 10% extra por nivel
+        // Factor de velocidad según el nivel; en el nivel 1 es 1.0, aumenta un 10% por nivel adicional
         float velocidadExtra = 1.0f + (0.1f * (nivel - 1));
-
         Enemigo nuevaPompa = new Enemigo(getContext(), this, sizeLevel, posX, posY, velocidadExtra);
         listaPompas.add(nuevaPompa);
     }
+
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
@@ -611,6 +608,44 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
 
     public void eliminarDisparo(Disparo d) {
         listaDisparos.remove(d);
+    }
+
+    private void ganar() {
+        isRunning = false; // Detiene el juego
+
+        // Se usa post() para asegurar que el diálogo se crea en el hilo de la interfaz
+        post(new Runnable() {
+            @Override
+            public void run() {
+                new AlertDialog.Builder(getContext())
+                        .setTitle("¡Has ganado!")
+                        .setMessage("¿Deseas reiniciar la partida?")
+                        .setCancelable(false)
+                        .setPositiveButton("Reiniciar", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                reiniciarPartida();
+                            }
+                        })
+                        .setNegativeButton("Salir", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                // Terminar la actividad
+                                ((Activity) getContext()).finish();
+                            }
+                        })
+                        .show();
+            }
+        });
+    }
+
+    private void reiniciarPartida() {
+        // Reinicia la actividad que contiene el juego
+        Context context = getContext();
+        Intent intent = new Intent(context, ActividadJuego.class);
+        context.startActivity(intent);
+        // Finaliza la actividad actual para evitar solapamientos
+        ((Activity) context).finish();
     }
 
 
