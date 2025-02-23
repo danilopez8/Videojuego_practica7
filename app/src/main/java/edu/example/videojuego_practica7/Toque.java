@@ -1,5 +1,8 @@
 package edu.example.videojuego_practica7;
 
+/**
+ * Clase para representar un toque en la pantalla.
+ */
 public class Toque {
 
     public int id;   // Identificador del toque (por ejemplo, para múltiples toques simultáneos)
