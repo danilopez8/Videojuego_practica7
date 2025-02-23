@@ -39,6 +39,7 @@ public class Enemigo {
         // Seleccionamos aleatoriamente un color de bola (0, 1 o 2)
         int bolaIndex = rand.nextInt(3);
         int srcX = bolaIndex * frameWidth;
+        // Recortar la bola de la imagen
         Rect src = new Rect(srcX, 0, srcX + frameWidth, frameHeight);
         bolaIndividual = Bitmap.createBitmap(spriteSheet, src.left, src.top, src.width(), src.height());
 
