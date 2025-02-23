@@ -4,6 +4,7 @@ import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.content.Intent;
 import android.graphics.Color;
+import android.media.MediaPlayer; // Importante
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -16,6 +17,8 @@ import androidx.core.view.WindowInsetsCompat;
 
 public class MainActivity extends AppCompatActivity {
 
+    private MediaPlayer mediaPlayer; // Para reproducir el sonido
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -27,6 +30,21 @@ public class MainActivity extends AppCompatActivity {
         b.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                // 1. Reproducir el sonido 'inicio.mp3'
+                mediaPlayer = MediaPlayer.create(MainActivity.this, R.raw.inicio);
+
+                mediaPlayer.setLooping(true);
+
+                // Liberar el MediaPlayer una vez que termine la reproducción
+                mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+                    @Override
+                    public void onCompletion(MediaPlayer mp) {
+                        mp.release();
+                    }
+                });
+                mediaPlayer.start();
+
+                // 2. Lanzar la siguiente actividad
                 Intent i = new Intent(getApplicationContext(), ActividadJuego.class);
                 startActivity(i);
             }
@@ -43,8 +61,7 @@ public class MainActivity extends AppCompatActivity {
         AnimatorSet animadorBton = new AnimatorSet();
         Button b=findViewById(R.id.button);
 
-        //1ª animación, trasladar desde la izquierda (800 pixeles menos hasta la posición
-        //inicial (0)
+        //1ª animación, trasladar desde la izquierda (800 pixeles menos hasta la posición inicial (0)
         ObjectAnimator trasladar= ObjectAnimator.ofFloat(b,"translationX",-800,0);
         trasladar.setDuration(5000);//duración 5 segundos
 
@@ -67,5 +84,20 @@ public class MainActivity extends AppCompatActivity {
 
         animadorBton.play(trasladar).with(fade).with(rotar).with(color).with(trasladarY);
         animadorBton.start();
-    };
+    }
+
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (mediaPlayer != null) {
+            if (mediaPlayer.isPlaying()) {
+                mediaPlayer.stop();
+            }
+            mediaPlayer.release();
+            mediaPlayer = null;
+        }
+    }
+
+
 }
