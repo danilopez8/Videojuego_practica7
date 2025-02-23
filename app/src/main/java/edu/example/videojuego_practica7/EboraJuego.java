@@ -7,6 +7,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
+import android.media.MediaPlayer;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -435,7 +436,18 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
         float disparoX = x + (frameWidth / 2);
         float disparoY = y - frameHeight;
         listaDisparos.add(new Disparo(getContext(), this, disparoX, disparoY));
+
+        // Reproducir sonido "disparo.mp3" (colocado en res/raw)
+        MediaPlayer mp = MediaPlayer.create(getContext(), R.raw.disparo);
+        mp.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+            @Override
+            public void onCompletion(MediaPlayer mp) {
+                mp.release();
+            }
+        });
+        mp.start();
     }
+
 
     // Nueva función
     private void verificarColisionJugador() {
@@ -478,6 +490,16 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
         for (Disparo d : listaDisparos) {
             for (Enemigo pompa : listaPompas) {
                 if (d.colisionaCon(pompa)) {
+                    // Reproducir el sonido de "burbuja_pop.mp3" al dividir la pompa
+                    MediaPlayer mp = MediaPlayer.create(getContext(), R.raw.burbuja_pop);
+                    mp.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+                        @Override
+                        public void onCompletion(MediaPlayer mp) {
+                            mp.release();
+                        }
+                    });
+                    mp.start();
+
                     // Dividir la pompa
                     Enemigo[] splitted = pompa.dividir();
                     if (splitted != null) {
@@ -494,7 +516,7 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
                 }
             }
         }
-        // Eliminamos pompas y disparos marcados
+        // Eliminamos las pompas y disparos marcados
         listaPompas.removeAll(pompasEliminar);
         listaDisparos.removeAll(disparosEliminar);
         // Añadimos las nuevas pompas resultantes de dividir
@@ -525,6 +547,7 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
             spawnPompa();
         }
     }
+
 
     private void quitarVida() {
         if (!jugadorGolpeado && vidas > 0) {
@@ -589,4 +612,6 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
     public void eliminarDisparo(Disparo d) {
         listaDisparos.remove(d);
     }
+
+
 }
