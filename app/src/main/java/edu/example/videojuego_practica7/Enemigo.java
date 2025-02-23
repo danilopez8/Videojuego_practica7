@@ -7,31 +7,32 @@ import android.graphics.Canvas;
 import android.graphics.Rect;
 
 import java.util.Random;
-
 public class Enemigo {
 
-    private Bitmap spriteSheet;  // Imagen de la bola (contiene las 3 bolas en línea)
-    private Bitmap bolaIndividual;  // Sprite recortado de una sola bola
+    private Bitmap spriteSheet;          // Imagen de la bola (contiene las 3 bolas en línea)
+    private Bitmap bolaIndividual;       // Sprite recortado de una sola bola
     private float x, y;
     private float velocidadX, velocidadY;
     private int ancho, alto;
     private int sizeLevel;
     private EboraJuego juego;
-    float speedFactor;
     private Random rand;
+    private float speedFactor;           // Factor de velocidad
 
-    public Enemigo(Context context, EboraJuego juego, int sizeLevel, float startX, float startY, float speeddFactor) {
+    // Constructor con speedFactor
+    public Enemigo(Context context, EboraJuego juego, int sizeLevel, float startX, float startY, float speedFactor) {
         this.juego = juego;
         this.sizeLevel = sizeLevel;
         this.x = startX;
         this.y = startY;
         this.rand = new Random();
+        this.speedFactor = speedFactor;  // Asignamos correctamente el parámetro
 
         // Cargar la imagen completa de bolas (contiene las 3 bolas en una fila)
         spriteSheet = BitmapFactory.decodeResource(context.getResources(), getResourceForSizeLevel(sizeLevel));
 
         // Extraer solo una bola de la imagen (dividiendo en 3 secciones)
-        int totalBolas = 3; // Imagen contiene 3 bolas
+        int totalBolas = 3; // La imagen contiene 3 bolas
         int frameWidth = spriteSheet.getWidth() / totalBolas;
         int frameHeight = spriteSheet.getHeight();
 
@@ -45,8 +46,7 @@ public class Enemigo {
         ancho = bolaIndividual.getWidth();
         alto = bolaIndividual.getHeight();
 
-        // Velocidades aleatorias multiplicadas por speedFactor
-
+        // Asignar velocidades aleatorias en X e Y, multiplicadas por speedFactor
         velocidadX = (rand.nextFloat() * 6 - 3) * speedFactor;
         velocidadY = (rand.nextFloat() * 6 - 3) * speedFactor;
 
@@ -59,6 +59,11 @@ public class Enemigo {
             velocidadY = (velocidadY < 0) ? -2 : 2;
             velocidadY *= speedFactor;
         }
+    }
+
+    // Constructor por defecto, con speedFactor = 1.0f
+    public Enemigo(Context context, EboraJuego juego, int sizeLevel, float startX, float startY) {
+        this(context, juego, sizeLevel, startX, startY, 1.0f);
     }
 
     // Devuelve la imagen de bolas según su tamaño
@@ -86,7 +91,7 @@ public class Enemigo {
             velocidadX *= -1;
         }
 
-        // Rebote en bordes superior/inferior (rebote simétrico)
+        // Rebote en bordes superior/inferior
         if (y < 0) {
             y = 0;
             velocidadY *= -1;
@@ -115,33 +120,17 @@ public class Enemigo {
             float offsetX = ancho / 2f;
             float offsetY = alto / 4f;
 
-            // Crear dos bolas de tamaño menor con separación
-            nuevas[0] = new Enemigo(juego.getContext(), juego, sizeLevel - 1, x - offsetX, y - offsetY,speedFactor);
-            nuevas[1] = new Enemigo(juego.getContext(), juego, sizeLevel - 1, x + offsetX, y - offsetY,speedFactor);
-
+            nuevas[0] = new Enemigo(juego.getContext(), juego, sizeLevel - 1, x - offsetX, y - offsetY, speedFactor);
+            nuevas[1] = new Enemigo(juego.getContext(), juego, sizeLevel - 1, x + offsetX, y - offsetY, speedFactor);
             return nuevas;
         }
         return null;
     }
 
     // Getters
-    public float getX() {
-        return x;
-    }
-
-    public float getY() {
-        return y;
-    }
-
-    public int getAncho() {
-        return ancho;
-    }
-
-    public int getAlto() {
-        return alto;
-    }
-
-    public int getSizeLevel() {
-        return sizeLevel;
-    }
+    public float getX() { return x; }
+    public float getY() { return y; }
+    public int getAncho() { return ancho; }
+    public int getAlto() { return alto; }
+    public int getSizeLevel() { return sizeLevel; }
 }

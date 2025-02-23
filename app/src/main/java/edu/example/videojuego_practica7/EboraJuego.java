@@ -511,7 +511,7 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
                     disparosEliminar.add(d);
                     // Rompe el bucle de pompas para este disparo
                     // Incrementamos el contador de enemigos eliminados
-                    enemigosEliminados++;
+
                     break;
                 }
             }
@@ -522,8 +522,8 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
         // Añadimos las nuevas pompas resultantes de dividir
         listaPompas.addAll(pompasNuevas);
 
-        // Si se han eliminado tantos enemigos como requería este nivel, pasa al siguiente
-        if (enemigosEliminados >= enemigosPorNivel) {
+        // Si ya no quedan enemigos en pantalla, pasar al siguiente nivel
+        if (listaPompas.isEmpty()) {
             pasarAlSiguienteNivel();
         }
     }
