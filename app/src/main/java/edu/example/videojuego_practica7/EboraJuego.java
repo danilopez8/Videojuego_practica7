@@ -75,6 +75,10 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
     // Suelo (coincide con el borde inferior donde los pies deben apoyarse)
     private float sueloY;
 
+    // Control de niveles
+    private int nivel = 1;          // Nivel actual (1, 2, 3, etc.)
+    private int enemigosPorNivel = 5;   // Número de enemigos a spawnear en el primer nivel
+    private int enemigosEliminados = 0; // Contador de enemigos eliminados
 
     public EboraJuego(Context context) {
         super(context);
@@ -119,6 +123,11 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
         // Indica el suelo como la parte inferior de la pantalla
         sueloY = pantallaAlto - frameHeight;
         y = sueloY; // El jugador inicia en el suelo
+
+        nivel = 1;
+        enemigosPorNivel = 5;  // o el número que quieras para el primer nivel
+        enemigosEliminados = 0;
+        fondoActual = 0;
 
         // Límites de movimiento
         limiteIzquierdo = 40;
@@ -479,6 +488,8 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
                     pompasEliminar.add(pompa);
                     disparosEliminar.add(d);
                     // Rompe el bucle de pompas para este disparo
+                    // Incrementamos el contador de enemigos eliminados
+                    enemigosEliminados++;
                     break;
                 }
             }
@@ -488,6 +499,31 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
         listaDisparos.removeAll(disparosEliminar);
         // Añadimos las nuevas pompas resultantes de dividir
         listaPompas.addAll(pompasNuevas);
+
+        // Si se han eliminado tantos enemigos como requería este nivel, pasa al siguiente
+        if (enemigosEliminados >= enemigosPorNivel) {
+            pasarAlSiguienteNivel();
+        }
+    }
+
+    private void pasarAlSiguienteNivel() {
+        nivel++;
+        // Cambia el fondo: asumiendo que el sprite de fondo tiene sus frames en orden,
+        // el nivel 2 utilizará el segundo frame (índice 1), etc.
+        fondoActual = nivel - 1;  // Por ejemplo: nivel 2 -> fondoActual=1
+
+        // Incrementa la cantidad de enemigos (puedes ajustar la fórmula)
+        enemigosPorNivel += 5;
+        // Resetea el contador de enemigos eliminados
+        enemigosEliminados = 0;
+
+        // Opcional: limpia la lista de pompas (si deseas reiniciar la acción)
+        listaPompas.clear();
+
+        // Spawnea los nuevos enemigos para el nuevo nivel
+        for (int i = 0; i < enemigosPorNivel; i++) {
+            spawnPompa();
+        }
     }
 
     private void quitarVida() {
@@ -522,7 +558,11 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
         float posX = (float) (Math.random() * (screenWidth - 100)) + 50;
         float posY = 0;
         int sizeLevel = 3; // Pompa grande
-        Enemigo nuevaPompa = new Enemigo(getContext(), this, sizeLevel, posX, posY);
+
+        // Factor de velocidad según el nivel, p.ej. un 10% extra por nivel
+        float velocidadExtra = 1.0f + (0.1f * (nivel - 1));
+
+        Enemigo nuevaPompa = new Enemigo(getContext(), this, sizeLevel, posX, posY, velocidadExtra);
         listaPompas.add(nuevaPompa);
     }
 

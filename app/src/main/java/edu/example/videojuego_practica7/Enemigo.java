@@ -17,10 +17,10 @@ public class Enemigo {
     private int ancho, alto;
     private int sizeLevel;
     private EboraJuego juego;
-    private static final int GRAVEDAD = 0;
+    float speedFactor;
     private Random rand;
 
-    public Enemigo(Context context, EboraJuego juego, int sizeLevel, float startX, float startY) {
+    public Enemigo(Context context, EboraJuego juego, int sizeLevel, float startX, float startY, float speeddFactor) {
         this.juego = juego;
         this.sizeLevel = sizeLevel;
         this.x = startX;
@@ -45,16 +45,19 @@ public class Enemigo {
         ancho = bolaIndividual.getWidth();
         alto = bolaIndividual.getHeight();
 
-        // Asignar velocidades aleatorias en X e Y (para que rebote correctamente)
-        velocidadX = rand.nextFloat() * 6 - 3;  // Rango entre -3 y 3
-        velocidadY = rand.nextFloat() * 6 - 3;  // Rango entre -3 y 3
+        // Velocidades aleatorias multiplicadas por speedFactor
+
+        velocidadX = (rand.nextFloat() * 6 - 3) * speedFactor;
+        velocidadY = (rand.nextFloat() * 6 - 3) * speedFactor;
 
         // Evitar velocidades demasiado pequeñas
         if (Math.abs(velocidadX) < 1) {
             velocidadX = (velocidadX < 0) ? -2 : 2;
+            velocidadX *= speedFactor;
         }
         if (Math.abs(velocidadY) < 1) {
             velocidadY = (velocidadY < 0) ? -2 : 2;
+            velocidadY *= speedFactor;
         }
     }
 
@@ -113,8 +116,8 @@ public class Enemigo {
             float offsetY = alto / 4f;
 
             // Crear dos bolas de tamaño menor con separación
-            nuevas[0] = new Enemigo(juego.getContext(), juego, sizeLevel - 1, x - offsetX, y - offsetY);
-            nuevas[1] = new Enemigo(juego.getContext(), juego, sizeLevel - 1, x + offsetX, y - offsetY);
+            nuevas[0] = new Enemigo(juego.getContext(), juego, sizeLevel - 1, x - offsetX, y - offsetY,speedFactor);
+            nuevas[1] = new Enemigo(juego.getContext(), juego, sizeLevel - 1, x + offsetX, y - offsetY,speedFactor);
 
             return nuevas;
         }
