@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
+import android.graphics.Rect;
 
 public class Disparo {
     private Bitmap imagen;
@@ -11,6 +12,9 @@ public class Disparo {
     private float velocidadY = -15;  // Velocidad del disparo (hacia arriba)
     private EboraJuego juego;
     private int ancho, alto;
+
+    private int delayFrames = 3; // Número de frames de retardo antes de verificar colisión
+    private int frameCounter = 0;
 
     public Disparo(Context context, EboraJuego juego, float startX, float startY) {
         this.juego = juego;
@@ -23,6 +27,8 @@ public class Disparo {
     }
 
     public void update() {
+        frameCounter++;
+
         y += velocidadY;
         if (y + alto < 0) {
            juego.eliminarDisparo(this);
@@ -35,8 +41,27 @@ public class Disparo {
     }
 
     public boolean colisionaCon(Enemigo pompa) {
-        return (x >= pompa.getX() && x <= pompa.getX() + pompa.getAncho() &&
-                y >= pompa.getY() && y <= pompa.getY() + pompa.getAlto());
+        // Si el disparo tiene menos de delayFrames, no se verifica la colisión
+        if (frameCounter < delayFrames) {
+            return false;
+        }
+
+        // Rect completo del disparo (parte inferior: y, superior: y - alto)
+        int left   = (int) (x - ancho / 2);
+        int top    = (int) (y - alto);
+        int right  = (int) (x + ancho / 2);
+        int bottom = (int) y;
+        Rect disparoRect = new Rect(left, top, right, bottom);
+
+        // Rect del enemigo
+        int pompaLeft   = (int) pompa.getX();
+        int pompaTop    = (int) pompa.getY();
+        int pompaRight  = (int) (pompa.getX() + pompa.getAncho());
+        int pompaBottom = (int) (pompa.getY() + pompa.getAlto());
+        Rect pompaRect = new Rect(pompaLeft, pompaTop, pompaRight, pompaBottom);
+
+        // Retorna true si los rectángulos se solapan
+        return Rect.intersects(disparoRect, pompaRect);
     }
 
     public float getX() {

@@ -373,14 +373,6 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
         Rect dstFondo = new Rect(0, 0, pantallaAncho, pantallaAlto);
         canvas.drawBitmap(fondoSprite, srcFondo, dstFondo, null);
 
-        /* Jugador
-        int srcXjug = frameWidth * frameActual;
-        int srcYjug = 0;
-        Rect srcJugador = new Rect(srcXjug, srcYjug, srcXjug + frameWidth, srcYjug + frameHeight);
-        Rect dstJugador = new Rect((int) x, (int) (y - frameHeight), (int) (x + frameWidth), (int) y);
-        canvas.drawBitmap(spriteSheet, srcJugador, dstJugador, null);
-*/
-
         if (frameActual != -1) {
             int srcXjug = frameWidth * frameActual;
             int srcYjug = 0;
