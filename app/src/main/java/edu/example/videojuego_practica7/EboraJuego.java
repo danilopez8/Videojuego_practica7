@@ -85,6 +85,7 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
     private int enemigosPorNivel = 5;   // Número de enemigos a spawnear en el primer nivel
     private int enemigosEliminados = 0; // Contador de enemigos eliminados
 
+    private BucleJuego bucleJuego;
     public EboraJuego(Context context) {
         super(context);
         surfaceHolder = getHolder();
@@ -153,10 +154,8 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
         // Ajustar la posición de los controles según el tamaño de la pantalla
         ajustarControles();
 
-        // Inicia el hilo del juego
-        gameThread = new Thread(this);
-        isRunning = true;
-        gameThread.start();
+        bucleJuego = new BucleJuego(getHolder(), this);
+        bucleJuego.start();
 
         // Spawnea una pompa grande al inicio
         spawnPompa();
@@ -209,7 +208,7 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
                 canvas = surfaceHolder.lockCanvas();
                 synchronized (surfaceHolder) {
                     actualizar();
-                    drawGame(canvas);
+                    renderizar(canvas);
                 }
             } finally {
                 if (canvas != null) {
@@ -224,31 +223,42 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
             Paint mypaint = new Paint();
             mypaint.setStyle(Paint.Style.STROKE);
 
-            // Limpiar la pantalla con un color de fondo (negro)
+            // Limpiar la pantalla
             canvas.drawColor(Color.BLACK);
 
-            // DIBUJAR EL FONDO
+            // Dibujar el fondo
             int srcX = fondoFrameAncho * fondoActual;
             int srcY = 0;
             Rect srcFondo = new Rect(srcX, srcY, srcX + fondoFrameAncho, srcY + fondoFrameAlto);
-
             Rect dstFondo = new Rect(0, 0, pantallaAncho, pantallaAlto);
             canvas.drawBitmap(fondoSprite, srcFondo, dstFondo, null);
 
-            // DIBUJAR EL JUGADOR
+            // Dibujar al jugador
             int srcXjug = frameWidth * frameActual;
             int srcYjug = 0;
-
             Rect srcJugador = new Rect(srcXjug, srcYjug, srcXjug + frameWidth, srcYjug + frameHeight);
             Rect dstJugador = new Rect((int) x, (int) (y - frameHeight), (int) (x + frameWidth), (int) y);
             canvas.drawBitmap(spriteSheet, srcJugador, dstJugador, null);
 
-            // DIBUJAR CONTROLES
+            // Dibujar los disparos
+            for (Disparo d : listaDisparos) {
+                d.draw(canvas);
+            }
+
+            // Dibujar los enemigos (pompas)
+            for (Enemigo pompa : listaPompas) {
+                pompa.draw(canvas);
+            }
+
+            // Dibujar controles
             Paint paint = new Paint();
             derecha.dibujar(canvas, paint);
             izquierda.dibujar(canvas, paint);
             disparo.dibujar(canvas, paint);
             salto.dibujar(canvas, paint);
+
+            // Dibujar HUD de vidas
+            dibujarVidas(canvas);
         }
     }
 
@@ -362,7 +372,7 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
         verificarColisionDisparos();
         verificarColisionJugador();
     }
-
+/*
     private void drawGame(Canvas canvas) {
         canvas.drawColor(Color.WHITE);
 
@@ -402,7 +412,7 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
         //  Dibuja el HUD de vidas
         dibujarVidas(canvas);
     }
-
+*/
     private void terminarParpadeo() {
         jugadorGolpeado = false;
         contadorGolpe = 0;
@@ -514,14 +524,15 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
         listaDisparos.removeAll(disparosEliminar);
         listaPompas.addAll(pompasNuevas);
 
-        // Si ya no quedan pompas, pasa al siguiente nivel
-        if (listaPompas.isEmpty()) {
-            pasarAlSiguienteNivel();
-        }
+
     }
 
 
-    private void pasarAlSiguienteNivel() {
+    public boolean sinEnemigos() {
+        return listaPompas.isEmpty();
+    }
+
+    public void pasarAlSiguienteNivel() {
         nivel++;
         if (nivel > 3) {  // Si ya completó 3 niveles
             ganar();
