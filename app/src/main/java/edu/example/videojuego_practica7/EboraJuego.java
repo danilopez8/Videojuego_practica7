@@ -88,7 +88,7 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
     private int enemigosEliminados = 0; // Contador de enemigos eliminados
 
     // Tiempo máximo en segundos para cada nivel (ajusta a tu gusto)
-    private int tiempoRestanteSegundos = 10;
+    private int tiempoRestanteSegundos = 90;
 
     // Cálculo de frames totales (usando la misma tasa de FPS que BucleJuego)
     private int framesRestantes;
@@ -653,7 +653,15 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
     }
 
     private void ganar() {
-        isRunning = false; // Detiene el juego
+        // 1) Detén el hilo secundario
+        if (bucleJuego != null) {
+            bucleJuego.fin();
+        }
+
+        // 2) Desactiva toques
+        setOnTouchListener(null);
+        setClickable(false);
+
         post(new Runnable() {
             @Override
             public void run() {
