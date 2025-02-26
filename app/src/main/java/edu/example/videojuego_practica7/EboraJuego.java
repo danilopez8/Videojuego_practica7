@@ -111,6 +111,9 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
         pantallaAncho = getWidth();
         pantallaAlto = getHeight();
 
+        // Definir el margen inferior que no usará el mapa (por ejemplo, 200 píxeles)
+        int margenInferior = 200;
+
         // Inicializamos el sprite del jugador y su posición
         spriteSheet = BitmapFactory.decodeResource(getResources(), R.drawable.player);  // Carga el sprite del jugador
 
@@ -124,13 +127,10 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
         frameWidth = spriteSheet.getWidth() / columnas;
         frameHeight = spriteSheet.getHeight() / filas;
 
-        // Posición inicial del personaje en pantalla
+        // Posición inicial del jugador: sus pies deben estar en el "suelo" definido por el margen
         x = 50;
-        y = pantallaAlto - frameHeight;
-
-        // Indica el suelo como la parte inferior de la pantalla
-        sueloY = pantallaAlto - frameHeight;
-        y = sueloY; // El jugador inicia en el suelo
+        sueloY = pantallaAlto - margenInferior;
+        y = sueloY;  // El jugador comienza con sus pies en el suelo
 
         nivel = 1;
         enemigosPorNivel = 5;  // o el número que quieras para el primer nivel
@@ -231,9 +231,13 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
             // Dibujar el fondo
             int srcX = fondoFrameAncho * fondoActual;
             int srcY = 0;
+            int margenInferior = 200; // Espacio en píxeles que quieres dejar en la parte inferior
             Rect srcFondo = new Rect(srcX, srcY, srcX + fondoFrameAncho, srcY + fondoFrameAlto);
-            Rect dstFondo = new Rect(0, 0, pantallaAncho, pantallaAlto);
+            Rect dstFondo = new Rect(0, 0, pantallaAncho, pantallaAlto - margenInferior);
             canvas.drawBitmap(fondoSprite, srcFondo, dstFondo, null);
+
+
+
 
             // Dibujar al jugador
             int srcXjug = frameWidth * frameActual;
@@ -425,13 +429,13 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
     private void dibujarVidas(Canvas canvas) {
         if (iconoVida == null) return;
 
-        // Posición donde empieza a dibujar las vidas
-        int offsetX = 20;
-        int offsetY = 20;
-        // Espacio entre íconos
         int separacion = 10;
-        // Ancho del icono
         int anchoVida = iconoVida.getWidth();
+        int offsetX = 600;
+        // Usamos el mismo margen que en renderizar:
+        int margenInferior = 200;
+        // Colocamos las vidas en la parte inferior, con un pequeño margen adicional, por ejemplo 20 píxeles dentro del área inferior:
+        int offsetY = pantallaAlto - margenInferior + 20;
 
         for (int i = 0; i < vidas; i++) {
             int xPos = offsetX + i * (anchoVida + separacion);
@@ -550,8 +554,6 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
     }
 
 
-
-
     private void quitarVida() {
         if (!jugadorGolpeado && vidas > 0) {
             // Reducir vida ahora
@@ -649,7 +651,6 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
     }
 
 
-
     private void finDelJuego() {
         isRunning = false;
         post(new Runnable() {
@@ -681,10 +682,6 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
             }
         });
     }
-
-
-
-
 
     private void reiniciarPartida() {
         // Reinicia la actividad que contiene el juego

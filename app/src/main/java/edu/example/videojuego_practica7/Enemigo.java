@@ -106,9 +106,13 @@ public class Enemigo {
         if (y < 0) {
             y = 0;
             velocidadY *= -1;
-        } else if (y + alto > juego.getHeight()) {
-            y = juego.getHeight() - alto;
-            velocidadY *= -1;
+        } else {
+            // Rebote inferior con margen de 200 px
+            int limiteInferiorMapa = juego.getHeight() - 200;  // Ajusta el 200 según necesites
+            if (y + alto > limiteInferiorMapa) {
+                y = limiteInferiorMapa - alto;
+                velocidadY *= -1;
+            }
         }
     }
 
