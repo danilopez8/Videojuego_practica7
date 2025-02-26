@@ -11,9 +11,11 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.media.MediaPlayer;
+import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+import android.view.View;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
@@ -37,7 +39,7 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
     private int frameWidth, frameHeight;
     private int columnas = 12;  // 12 frames en total (6 hacia la derecha y 6 hacia la izquierda)
     private int filas = 1;     // Solo una fila
-    private float velocidadX = 10f;
+    private float velocidadX = 15f;
     private boolean moviendoDerecha = false;
     private boolean moviendoIzquierda = false;
 
@@ -318,14 +320,14 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
             y = limiteInferior;
         }
 
-        // === DISPAROS ===
+        // DISPAROS
         framesDesdeUltimoDisparo++;
         if (disparo.pulsado && framesDesdeUltimoDisparo >= FRAMES_ENTRE_DISPAROS) {
             crearDisparo();
             framesDesdeUltimoDisparo = 0;
         }
 
-        // === SI ESTÁ GOLPEADO, PARPADEO E IGNORA COLISIONES ===
+        // SI ESTÁ GOLPEADO, PARPADEO E IGNORA COLISIONES
         if (jugadorGolpeado) {
             contadorGolpe++;
 
@@ -347,10 +349,10 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
             // NO verificar colisiones => inmune
             // NO return aquí => deja que el enemigo y disparos se actualicen
         } else {
-            // === NO ESTÁ GOLPEADO => actualizamos frame con el baseFrame normal ===
+            // NO ESTÁ GOLPEADO => actualizamos frame con el baseFrame normal
             frameActual = baseFrame;
 
-            // === Verificar colision con jugador (ya no es inmune) ===
+            // Verificar colision con jugador (ya no es inmune)
             verificarColisionJugador();
         }
 
@@ -570,12 +572,12 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
         }
     }
 
-    // Fin de juego: pausar hilo o mostrar "Game Over"
+  /*  // Fin de juego: pausar hilo o mostrar "Game Over"
     private void finDelJuego() {
         isRunning = false;
         // Podrías pasar a otra Activity, mostrar un dialog, etc.
     }
-
+*/
 
     private void spawnPompa() {
         int screenWidth = getWidth();
@@ -615,32 +617,74 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
 
     private void ganar() {
         isRunning = false; // Detiene el juego
-
-        // Se usa post() para asegurar que el diálogo se crea en el hilo de la interfaz
         post(new Runnable() {
             @Override
             public void run() {
-                new AlertDialog.Builder(getContext())
-                        .setTitle("¡Has ganado!")
-                        .setMessage("¿Deseas reiniciar la partida?")
+                // Inflar el layout personalizado para victoria (dialog_victoria.xml)
+                LayoutInflater inflater = LayoutInflater.from(getContext());
+                View dialogView = inflater.inflate(R.layout.dialog_victoria, null);
+
+                final AlertDialog dialog = new AlertDialog.Builder(getContext())
+                        .setView(dialogView)
                         .setCancelable(false)
                         .setPositiveButton("Reiniciar", new DialogInterface.OnClickListener() {
                             @Override
-                            public void onClick(DialogInterface dialog, int which) {
+                            public void onClick(DialogInterface d, int which) {
+                                // Despedir el diálogo antes de reiniciar
+                                d.dismiss();
                                 reiniciarPartida();
                             }
                         })
                         .setNegativeButton("Salir", new DialogInterface.OnClickListener() {
                             @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                // Terminar la actividad
+                            public void onClick(DialogInterface d, int which) {
+                                d.dismiss();
                                 ((Activity) getContext()).finish();
                             }
                         })
-                        .show();
+                        .create();
+                dialog.show();
             }
         });
     }
+
+
+
+    private void finDelJuego() {
+        isRunning = false;
+        post(new Runnable() {
+            @Override
+            public void run() {
+                LayoutInflater inflater = LayoutInflater.from(getContext());
+                View dialogView = inflater.inflate(R.layout.dialog_derrota, null);
+
+                final AlertDialog dialog = new AlertDialog.Builder(getContext())
+                        .setView(dialogView)
+                        .setCancelable(false)
+                        .setPositiveButton("Reiniciar", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface d, int which) {
+                                d.dismiss();  // Cierra el diálogo
+                                reiniciarPartida();
+                            }
+                        })
+                        .setNegativeButton("Salir", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface d, int which) {
+                                d.dismiss();  // Cierra el diálogo
+                                ((Activity) getContext()).finish();
+                            }
+                        })
+                        .create();
+
+                dialog.show();
+            }
+        });
+    }
+
+
+
+
 
     private void reiniciarPartida() {
         // Reinicia la actividad que contiene el juego
