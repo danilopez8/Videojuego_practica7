@@ -87,6 +87,13 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
     private int enemigosPorNivel = 5;   // Número de enemigos a spawnear en el primer nivel
     private int enemigosEliminados = 0; // Contador de enemigos eliminados
 
+    // Tiempo máximo en segundos para cada nivel (ajusta a tu gusto)
+    private int tiempoRestanteSegundos = 10;
+
+    // Cálculo de frames totales (usando la misma tasa de FPS que BucleJuego)
+    private int framesRestantes;
+
+
     private BucleJuego bucleJuego;
     public EboraJuego(Context context) {
         super(context);
@@ -110,6 +117,8 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
         // Obtener el tamaño de la pantalla
         pantallaAncho = getWidth();
         pantallaAlto = getHeight();
+
+        framesRestantes = tiempoRestanteSegundos * BucleJuego.MAX_FPS;
 
         // Definir el margen inferior que no usará el mapa (por ejemplo, 200 píxeles)
         int margenInferior = 200;
@@ -237,8 +246,6 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
             canvas.drawBitmap(fondoSprite, srcFondo, dstFondo, null);
 
 
-
-
             // Dibujar al jugador
             int srcXjug = frameWidth * frameActual;
             int srcYjug = 0;
@@ -283,6 +290,14 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
                 enElAire = false;
                 velocidadY = 0;
             }
+        }
+
+        // Decrementar el contador de frames del temporizador
+        framesRestantes--;
+        if (framesRestantes <= 0) {
+            // Se acabó el tiempo, fin del juego
+            finDelJuego();
+            return; // Para que no siga actualizando este frame
         }
 
         // === MOVIMIENTO HORIZONTAL (SIEMPRE PERMITIDO) ===
@@ -441,6 +456,20 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
             int xPos = offsetX + i * (anchoVida + separacion);
             int yPos = offsetY;
             canvas.drawBitmap(iconoVida, xPos, yPos, null);
+
+            // A continuación, dibujamos el temporizador
+            // Convertimos frames restantes a segundos
+            int segundosRestantes = framesRestantes / BucleJuego.MAX_FPS;
+
+            // Ajusta un poco la posición para que no se superponga a las vidas
+            int xTimer = offsetX + (vidas * (anchoVida + separacion)) + 50;
+            int yTimer = offsetY + 30;  // Un poco más abajo o al mismo nivel
+
+            Paint paint = new Paint();
+            paint.setColor(Color.WHITE);
+            paint.setTextSize(40);  // Ajusta el tamaño de fuente
+
+            canvas.drawText("Tiempo: " + segundosRestantes, xTimer, yTimer, paint);
         }
     }
 
@@ -544,6 +573,9 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
             ganar();
             return;
         }
+        // Reiniciamos el temporizador a 30 segundos (o lo que quieras)
+        framesRestantes = tiempoRestanteSegundos * BucleJuego.MAX_FPS;
+
         fondoActual = nivel - 1;
         enemigosPorNivel = (nivel * 1) + 0;
         enemigosEliminados = 0;
@@ -595,6 +627,9 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
+
+
+
         int action = event.getAction();
         int ex = (int) event.getX();
         int ey = (int) event.getY();
@@ -652,28 +687,39 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
 
 
     private void finDelJuego() {
-        isRunning = false;
+        // 1) Indica a BucleJuego que se pare
+        if (bucleJuego != null) {
+            bucleJuego.fin();
+        }
+
+        // Deshabilitar toques del SurfaceView para que el AlertDialog reciba los eventos
+        this.setOnTouchListener(null);
+        this.setClickable(false);
+
+        // Mostrar el diálogo en el hilo principal
         post(new Runnable() {
             @Override
             public void run() {
-                LayoutInflater inflater = LayoutInflater.from(getContext());
-                View dialogView = inflater.inflate(R.layout.dialog_derrota, null);
+                Activity activity = (Activity) getContext();
+                if (activity == null || activity.isFinishing()) return;
 
-                final AlertDialog dialog = new AlertDialog.Builder(getContext())
+                // Inflar el layout y crear el diálogo
+                View dialogView = LayoutInflater.from(activity).inflate(R.layout.dialog_derrota, null);
+                AlertDialog dialog = new AlertDialog.Builder(activity)
                         .setView(dialogView)
                         .setCancelable(false)
                         .setPositiveButton("Reiniciar", new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface d, int which) {
-                                d.dismiss();  // Cierra el diálogo
+                                d.dismiss();
                                 reiniciarPartida();
                             }
                         })
                         .setNegativeButton("Salir", new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface d, int which) {
-                                d.dismiss();  // Cierra el diálogo
-                                ((Activity) getContext()).finish();
+                                d.dismiss();
+                                activity.finish();
                             }
                         })
                         .create();
