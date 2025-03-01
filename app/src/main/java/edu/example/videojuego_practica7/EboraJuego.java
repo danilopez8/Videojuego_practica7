@@ -220,12 +220,15 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
     @Override
     public void surfaceDestroyed(@NonNull SurfaceHolder holder) {
         isRunning = false;
-        try {
-            gameThread.join();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+        if (gameThread != null) {
+            try {
+                gameThread.join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         }
     }
+
 
     @Override
     public void run() {
