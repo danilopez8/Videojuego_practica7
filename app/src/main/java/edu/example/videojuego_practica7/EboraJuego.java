@@ -86,6 +86,14 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
     private int nivel = 1;          // Nivel actual (1, 2, 3, etc.)
     private int enemigosPorNivel = 5;   // Número de enemigos a spawnear en el primer nivel
     private int enemigosEliminados = 0; // Contador de enemigos eliminados
+    private Bitmap nivelesImagen;
+    private boolean mostrandoNivel = false;
+    private int contadorTransicion = 0;
+    private final int DURACION_TRANSICION = 120; // 2 segundos a 60 FPS
+    private int alphaNivel = 0;  // Opacidad inicial (0 = invisible)
+    private boolean fadeIn = true;  // Indica si estamos en la fase de aparición
+    private final int FADE_STEP = 5;  // Cantidad de opacidad que aumenta/disminuye por frame
+
 
     // Tiempo máximo en segundos para cada nivel (ajusta a tu gusto)
     private int tiempoRestanteSegundos = 90;
@@ -117,6 +125,14 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
         // Obtener el tamaño de la pantalla
         pantallaAncho = getWidth();
         pantallaAlto = getHeight();
+
+        // Cargar la imagen de niveles
+        nivelesImagen = BitmapFactory.decodeResource(getResources(), R.drawable.niveles_fondo);
+// Iniciar la transición desde el inicio del juego
+        mostrandoNivel = true;
+        contadorTransicion = 0;
+        alphaNivel = 0;
+        fadeIn = true;
 
         framesRestantes = tiempoRestanteSegundos * BucleJuego.MAX_FPS;
 
@@ -272,6 +288,47 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
 
             // Dibujar HUD de vidas
             dibujarVidas(canvas);
+
+            if (mostrandoNivel && nivelesImagen != null) {
+                // Calcular qué parte de la imagen mostrar
+                int seccionAncho = nivelesImagen.getWidth() / 3;  // 3 niveles en una sola imagen
+                int srcXNiv = (nivel - 1) * seccionAncho;
+                Rect src = new Rect(srcXNiv, 0, srcXNiv + seccionAncho, nivelesImagen.getHeight());
+                Rect dst = new Rect(0, 0, pantallaAncho, pantallaAlto);
+
+                // Crear un Paint con la opacidad ajustada
+                Paint paintNivel = new Paint();
+                paintNivel.setAlpha(alphaNivel);
+
+                // Dibujar la parte correspondiente de la imagen con transparencia
+                canvas.drawBitmap(nivelesImagen, src, dst, paint);
+
+                // Manejar la animación fade-in y fade-out
+                if (fadeIn) {
+                    alphaNivel += FADE_STEP;
+                    if (alphaNivel >= 255) {  // Cuando llega al máximo, cambia a fade-out
+                        alphaNivel = 255;
+                        fadeIn = false;
+                    }
+                } else {
+                    alphaNivel -= FADE_STEP;
+                    if (alphaNivel <= 0) {  // Cuando llega a 0, termina la transición
+                        mostrandoNivel = false;
+
+                        // Ahora iniciamos el nivel normalmente
+                        framesRestantes = tiempoRestanteSegundos * BucleJuego.MAX_FPS;
+                        fondoActual = nivel - 1;
+                        enemigosPorNivel = nivel;
+                        enemigosEliminados = 0;
+                        listaPompas.clear();
+                        for (int i = 0; i < enemigosPorNivel; i++) {
+                            spawnPompa();
+                        }
+                    }
+                }
+            }
+
+
         }
     }
 
@@ -573,6 +630,12 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
             ganar();
             return;
         }
+
+        mostrandoNivel = true;
+        contadorTransicion = 0;
+        alphaNivel = 0;
+        fadeIn = true;
+
         // Reiniciamos el temporizador a 30 segundos (o lo que quieras)
         framesRestantes = tiempoRestanteSegundos * BucleJuego.MAX_FPS;
 
@@ -619,7 +682,7 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
         float posY = 0; // Aparece en la parte superior
         int sizeLevel = 3; // Pompa grande
         // Factor de velocidad según el nivel; en el nivel 1 es 1.0, aumenta un 10% por nivel adicional
-        float velocidadExtra = 1.0f + (0.1f * (nivel - 1));
+        float velocidadExtra = 1.0f + (0.2f * (nivel - 1));
         Enemigo nuevaPompa = new Enemigo(getContext(), this, sizeLevel, posX, posY, velocidadExtra);
         listaPompas.add(nuevaPompa);
     }

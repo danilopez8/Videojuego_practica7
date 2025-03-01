@@ -5,15 +5,20 @@
     android:layout_height="wrap_content"
     android:orientation="vertical"
     android:background="@drawable/victoria"
+    android:gravity="bottom"
     android:padding="24dp">
 
     <TextView
         android:id="@+id/tvMessage"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="24dp"
+        android:layout_gravity="center"
+        android:background="#99000000"
+        android:padding="10dp"
+        android:shadowColor="#000000"
         android:text="¡Enhorabuena has ganado! ¿Deseas reiniciar la partida?"
-        android:textColor="@android:color/white"
-        android:textSize="18sp" />
+        android:textColor="#FFFFFF"
+        android:textSize="24sp"
+        android:textStyle="bold" />
 
 </LinearLayout>
