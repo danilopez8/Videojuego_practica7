@@ -157,7 +157,7 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
         sueloY = pantallaAlto - margenInferior;
         y = sueloY;  // El jugador comienza con sus pies en el suelo
 
-        nivel = 1;
+        nivel = 0;
         enemigosPorNivel = 5;  // o el número que quieras para el primer nivel
         enemigosEliminados = 0;
         fondoActual = 0;
