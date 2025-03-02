@@ -93,7 +93,7 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
     private int alphaNivel = 0;  // Opacidad inicial (0 = invisible)
     private boolean fadeIn = true;  // Indica si estamos en la fase de aparición
     private final int FADE_STEP = 5;  // Cantidad de opacidad que aumenta/disminuye por frame
-
+    private boolean puedeMoverse = false;
 
     // Tiempo máximo en segundos para cada nivel (ajusta a tu gusto)
     private int tiempoRestanteSegundos = 90;
@@ -111,7 +111,7 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
 
         // Inicializar los controles
         derecha = new Control(context, 0, 0);
-        derecha.cargarImagen(R.drawable.alante);
+        derecha.cargarImagen(R.drawable.delante);
         izquierda = new Control(context, 0, 0);
         izquierda.cargarImagen(R.drawable.atras);
         disparo = new Control(context, 0, 0);
@@ -128,11 +128,13 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
 
         // Cargar la imagen de niveles
         nivelesImagen = BitmapFactory.decodeResource(getResources(), R.drawable.niveles_fondo);
-// Iniciar la transición desde el inicio del juego
+        // Iniciar la transición desde el inicio del juego
         mostrandoNivel = true;
         contadorTransicion = 0;
         alphaNivel = 0;
         fadeIn = true;
+
+        puedeMoverse = false;
 
         framesRestantes = tiempoRestanteSegundos * BucleJuego.MAX_FPS;
 
@@ -157,7 +159,7 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
         sueloY = pantallaAlto - margenInferior;
         y = sueloY;  // El jugador comienza con sus pies en el suelo
 
-        nivel = 0;
+        nivel = 1;
         enemigosPorNivel = 5;  // o el número que quieras para el primer nivel
         enemigosEliminados = 0;
         fondoActual = 0;
@@ -198,7 +200,7 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
 
         // Flecha derecha
         derecha = new Control(getContext(), 50 + izquierda.Ancho(), pantallaAlto - 200);  // Colocamos la flecha derecha justo al lado de la izquierda
-        derecha.cargarImagen(R.drawable.alante);  // Imagen de flecha derecha
+        derecha.cargarImagen(R.drawable.delante);  // Imagen de flecha derecha
         derecha.nombre = "DERECHA";  // Nombre del control
 
         // Botón de disparo
@@ -259,9 +261,9 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
             // Dibujar el fondo
             int srcX = fondoFrameAncho * fondoActual;
             int srcY = 0;
-            int margenInferior = 200; // Espacio en píxeles que quieres dejar en la parte inferior
+            //int margenInferior = 200; // Espacio en píxeles que quieres dejar en la parte inferior
             Rect srcFondo = new Rect(srcX, srcY, srcX + fondoFrameAncho, srcY + fondoFrameAlto);
-            Rect dstFondo = new Rect(0, 0, pantallaAncho, pantallaAlto - margenInferior);
+            Rect dstFondo = new Rect(0, 0, pantallaAncho, pantallaAlto);
             canvas.drawBitmap(fondoSprite, srcFondo, dstFondo, null);
 
 
@@ -317,6 +319,7 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
                     alphaNivel -= FADE_STEP;
                     if (alphaNivel <= 0) {  // Cuando llega a 0, termina la transición
                         mostrandoNivel = false;
+                        puedeMoverse = true;
 
                         // Ahora iniciamos el nivel normalmente
                         framesRestantes = tiempoRestanteSegundos * BucleJuego.MAX_FPS;
@@ -330,8 +333,6 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
                     }
                 }
             }
-
-
         }
     }
 
@@ -508,7 +509,7 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
         int anchoVida = iconoVida.getWidth();
         int offsetX = 600;
         // Usamos el mismo margen que en renderizar:
-        int margenInferior = 200;
+        int margenInferior = 150;
         // Colocamos las vidas en la parte inferior, con un pequeño margen adicional, por ejemplo 20 píxeles dentro del área inferior:
         int offsetY = pantallaAlto - margenInferior + 20;
 
@@ -548,7 +549,6 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
         });
         mp.start();
     }
-
 
     // Nueva función
     private void verificarColisionJugador() {
