@@ -278,8 +278,7 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
     }
 
     /**
-     * Actualiza el estado del juego.
-     *
+     * Renderiza el juego en el lienzo.
      * @param canvas lienzo
      */
     public void renderizar(Canvas canvas) {
