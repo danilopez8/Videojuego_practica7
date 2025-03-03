@@ -62,7 +62,10 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
     private ArrayList<Enemigo> listaPompas = new ArrayList<>();
 
     // Límites del movimiento del jugador
-    private int limiteIzquierdo, limiteDerecho, limiteSuperior, limiteInferior;
+    int limiteIzquierdo;
+    int limiteDerecho;
+    int limiteSuperior;
+    int limiteInferior;
 
     // Número de vidas del jugador
     private int vidas = 3;
@@ -255,69 +258,71 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
             Paint mypaint = new Paint();
             mypaint.setStyle(Paint.Style.STROKE);
 
-            // Limpiar la pantalla
+            // 1) Limpiar la pantalla
             canvas.drawColor(Color.BLACK);
 
-            // Dibujar el fondo
+            // 2) Dibujar el fondo
             int srcX = fondoFrameAncho * fondoActual;
             int srcY = 0;
-            //int margenInferior = 200; // Espacio en píxeles que quieres dejar en la parte inferior
             Rect srcFondo = new Rect(srcX, srcY, srcX + fondoFrameAncho, srcY + fondoFrameAlto);
             Rect dstFondo = new Rect(0, 0, pantallaAncho, pantallaAlto);
             canvas.drawBitmap(fondoSprite, srcFondo, dstFondo, null);
 
 
-            // Dibujar al jugador
-            int srcXjug = frameWidth * frameActual;
-            int srcYjug = 0;
-            Rect srcJugador = new Rect(srcXjug, srcYjug, srcXjug + frameWidth, srcYjug + frameHeight);
-            Rect dstJugador = new Rect((int) x, (int) (y - frameHeight), (int) (x + frameWidth), (int) y);
-            canvas.drawBitmap(spriteSheet, srcJugador, dstJugador, null);
+            // 4) Dibujar al jugador y las bolas (solo si 'puedeMoverse' es true)
+            if (puedeMoverse) {
+                // (a) Dibujar al jugador:
+                int srcXjug = frameWidth * frameActual;
+                int srcYjug = 0;
+                Rect srcJugador = new Rect(srcXjug, srcYjug, srcXjug + frameWidth, srcYjug + frameHeight);
+                // Si el jugador está en el aire, usamos su 'y' actual; de lo contrario, fijamos su base en el límite inferior
+                int playerBottom = enElAire ? (int) y : limiteInferior;
+                Rect dstJugador = new Rect((int) x, playerBottom - frameHeight, (int) (x + frameWidth), playerBottom);
+                canvas.drawBitmap(spriteSheet, srcJugador, dstJugador, null);
 
-            // Dibujar los disparos
-            for (Disparo d : listaDisparos) {
-                d.draw(canvas);
+                // (b) Dibujar disparos
+                for (Disparo d : listaDisparos) {
+                    d.draw(canvas);
+                }
+
+                // (c) Dibujar enemigos (bolas)
+                for (Enemigo pompa : listaPompas) {
+                    pompa.draw(canvas);
+                }
             }
 
-            // Dibujar los enemigos (pompas)
-            for (Enemigo pompa : listaPompas) {
-                pompa.draw(canvas);
-            }
+            // 5) Dibujar controles con transparencia (50% opacidad)
+            Paint controlPaint = new Paint();
+            controlPaint.setAlpha(128);
+            derecha.dibujar(canvas, controlPaint);
+            izquierda.dibujar(canvas, controlPaint);
+            disparo.dibujar(canvas, controlPaint);
+            salto.dibujar(canvas, controlPaint);
 
-            // Dibujar controles
-            Paint paint = new Paint();
-            derecha.dibujar(canvas, paint);
-            izquierda.dibujar(canvas, paint);
-            disparo.dibujar(canvas, paint);
-            salto.dibujar(canvas, paint);
-
-            // Dibujar HUD de vidas
+            // 6) Dibujar HUD de vidas
             dibujarVidas(canvas);
 
+            // 7) Dibujar transición de niveles (se mantiene tu código original)
             if (mostrandoNivel && nivelesImagen != null) {
-                // Calcular qué parte de la imagen mostrar
                 int seccionAncho = nivelesImagen.getWidth() / 3;  // 3 niveles en una sola imagen
                 int srcXNiv = (nivel - 1) * seccionAncho;
                 Rect src = new Rect(srcXNiv, 0, srcXNiv + seccionAncho, nivelesImagen.getHeight());
                 Rect dst = new Rect(0, 0, pantallaAncho, pantallaAlto);
 
-                // Crear un Paint con la opacidad ajustada
                 Paint paintNivel = new Paint();
                 paintNivel.setAlpha(alphaNivel);
 
-                // Dibujar la parte correspondiente de la imagen con transparencia
-                canvas.drawBitmap(nivelesImagen, src, dst, paint);
+                canvas.drawBitmap(nivelesImagen, src, dst, paintNivel);
 
-                // Manejar la animación fade-in y fade-out
                 if (fadeIn) {
                     alphaNivel += FADE_STEP;
-                    if (alphaNivel >= 255) {  // Cuando llega al máximo, cambia a fade-out
+                    if (alphaNivel >= 255) {
                         alphaNivel = 255;
                         fadeIn = false;
                     }
                 } else {
                     alphaNivel -= FADE_STEP;
-                    if (alphaNivel <= 0) {  // Cuando llega a 0, termina la transición
+                    if (alphaNivel <= 0) {
                         mostrandoNivel = false;
                         puedeMoverse = true;
 
@@ -336,7 +341,8 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
         }
     }
 
-    public void actualizar() {
+
+        public void actualizar() {
 
         // === SALTO: Igual que antes ===
         if (salto.pulsado && !enElAire) {
@@ -507,36 +513,37 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
 
         int separacion = 10;
         int anchoVida = iconoVida.getWidth();
-        int offsetX = 600;
-        // Usamos el mismo margen que en renderizar:
-        int margenInferior = 150;
-        // Colocamos las vidas en la parte inferior, con un pequeño margen adicional, por ejemplo 20 píxeles dentro del área inferior:
-        int offsetY = pantallaAlto - margenInferior + 20;
+        int offsetX = 20; // Cambiado para que se dibuje cerca del borde izquierdo
+        int offsetY = 20; // Cambiado para que se dibuje cerca del borde superior
 
         for (int i = 0; i < vidas; i++) {
             int xPos = offsetX + i * (anchoVida + separacion);
             int yPos = offsetY;
             canvas.drawBitmap(iconoVida, xPos, yPos, null);
 
-            // A continuación, dibujamos el temporizador
-            // Convertimos frames restantes a segundos
+            // Convertir frames restantes a segundos para el temporizador
             int segundosRestantes = framesRestantes / BucleJuego.MAX_FPS;
 
-            // Ajusta un poco la posición para que no se superponga a las vidas
+            // Posicionar el temporizador a la derecha de los iconos de vida
             int xTimer = offsetX + (vidas * (anchoVida + separacion)) + 50;
-            int yTimer = offsetY + 30;  // Un poco más abajo o al mismo nivel
+            int yTimer = offsetY + 30;  // Un poco más abajo de los iconos
 
             Paint paint = new Paint();
             paint.setColor(Color.WHITE);
-            paint.setTextSize(40);  // Ajusta el tamaño de fuente
+            paint.setTextSize(40);
 
             canvas.drawText("Tiempo: " + segundosRestantes, xTimer, yTimer, paint);
         }
     }
 
+
     private void crearDisparo() {
-        float disparoX = x + (frameWidth / 2);
-        float disparoY = y - frameHeight;
+        // El disparo saldrá desde el centro horizontal y la "cabeza" del jugador.
+        float disparoX = x + (frameWidth / 2f);
+        // Si el jugador está en el aire, usamos su posición actual; si no, lo situamos en el límite inferior.
+        float playerBottom = enElAire ? y : limiteInferior;
+        // Suponemos que la cabeza está aproximadamente al 80% de la altura del sprite (ajusta según tu sprite)
+        float disparoY = playerBottom - (frameHeight * 0.8f);
         listaDisparos.add(new Disparo(getContext(), this, disparoX, disparoY));
 
         // Reproducir sonido "disparo.mp3" (colocado en res/raw)
@@ -550,37 +557,38 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
         mp.start();
     }
 
-    // Nueva función
+
     private void verificarColisionJugador() {
         if (jugadorGolpeado) {
-            // Está parpadeando/inmune, no colisiona
+            // Si el jugador está en modo inmune, no se detectan colisiones.
             return;
         }
-
-        // JugadorRect
+        // Usamos la misma lógica que en renderizar para definir el rectángulo del jugador.
+        int playerBottom = enElAire ? (int) y : limiteInferior;
         Rect jugadorRect = new Rect(
-                (int)x,
-                (int)(y - frameHeight),
-                (int)(x + frameWidth),
-                (int)y
+                (int) x,
+                (int) (playerBottom - frameHeight),
+                (int) (x + frameWidth),
+                playerBottom
         );
 
-        // Recorre pompas
+        // Recorre cada bola (enemigo)
         for (Enemigo pompa : listaPompas) {
             Rect pompaRect = new Rect(
-                    (int)pompa.getX(),
-                    (int)pompa.getY(),
-                    (int)(pompa.getX() + pompa.getAncho()),
-                    (int)(pompa.getY() + pompa.getAlto())
+                    (int) pompa.getX(),
+                    (int) pompa.getY(),
+                    (int) (pompa.getX() + pompa.getAncho()),
+                    (int) (pompa.getY() + pompa.getAlto())
             );
-
-            if (Colision.rectsOverlap(jugadorRect, pompaRect)) {
+            if (Rect.intersects(jugadorRect, pompaRect)) {
                 quitarVida();
-                // Podrías hacer rebotar la pompa o lo que desees.
-                break; // Con break evita quitar más de una vida en un frame
+                // Salir del bucle para evitar quitar más de una vida en el mismo frame.
+                break;
             }
         }
     }
+
+
 
     // **** ARREGLO con listas temporales para evitar ConcurrentModificationException ****
     private void verificarColisionDisparos() {
@@ -638,6 +646,7 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
         contadorTransicion = 0;
         alphaNivel = 0;
         fadeIn = true;
+        puedeMoverse = false;
 
         // Reiniciamos el temporizador a 30 segundos (o lo que quieras)
         framesRestantes = tiempoRestanteSegundos * BucleJuego.MAX_FPS;

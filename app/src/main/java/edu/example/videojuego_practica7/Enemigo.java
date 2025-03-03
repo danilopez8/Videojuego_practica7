@@ -93,28 +93,25 @@ public class Enemigo {
         x += velocidadX;
         y += velocidadY;
 
-        // Rebote en los bordes horizontal
-        if (x < 0) {
-            x = 0;
+        // Rebote en el borde izquierdo/derecho usando limiteIzquierdo/limiteDerecho
+        if (x < juego.limiteIzquierdo) {
+            x = juego.limiteIzquierdo;
             velocidadX *= -1;
-        } else if (x + ancho > juego.getWidth()) {
-            x = juego.getWidth() - ancho;
+        } else if (x + ancho > juego.limiteDerecho) {
+            x = juego.limiteDerecho - ancho;
             velocidadX *= -1;
         }
 
-        // Rebote en los bordes vertical
-        if (y < 0) {
-            y = 0;
+        // Rebote en el borde superior/inferior usando limiteSuperior/limiteInferior
+        if (y < juego.limiteSuperior) {
+            y = juego.limiteSuperior;
             velocidadY *= -1;
-        } else {
-            // Rebote inferior con margen de 200 px
-            int limiteInferiorMapa = juego.getHeight() - 200;  // Ajusta el 200 según necesites
-            if (y + alto > limiteInferiorMapa) {
-                y = limiteInferiorMapa - alto;
-                velocidadY *= -1;
-            }
+        } else if (y + alto > juego.limiteInferior) {
+            y = juego.limiteInferior - alto;
+            velocidadY *= -1;
         }
     }
+
 
     public void draw(Canvas canvas) {
         canvas.drawBitmap(bolaIndividual, x, y, null);
