@@ -7,6 +7,9 @@ import android.graphics.Canvas;
 import android.graphics.Rect;
 import java.util.Random;
 
+/**
+ * Clase que representa un enemigo en el juego.
+ */
 public class Enemigo {
 
     // Imagen original (spriteSheet) que contiene 3 variantes en línea
@@ -33,6 +36,15 @@ public class Enemigo {
     // Generador de números aleatorios
     private Random rand;
 
+    /**
+     * Constructor de la clase Enemigo.
+     * @param context Contexto de la aplicación
+     * @param juego Referencia al juego
+     * @param sizeLevel Tamaño de la bola: 3 = grande, 2 = mediana, 1 = pequeña
+     * @param startX Posición inicial en el eje X
+     * @param startY Posición inicial en el eje Y
+     * @param speedFactor Factor de velocidad (ajustable según el nivel)
+     */
     public Enemigo(Context context, EboraJuego juego, int sizeLevel, float startX, float startY, float speedFactor) {
         this.juego = juego;
         this.sizeLevel = sizeLevel;
@@ -45,23 +57,23 @@ public class Enemigo {
         // Cargar la imagen adecuada según el tamaño
         spriteSheet = BitmapFactory.decodeResource(context.getResources(), getResourceForSizeLevel(sizeLevel));
 
-        // Suponemos que la imagen contiene 3 variantes horizontales
         int totalBolas = 3;
         int spriteAncho = spriteSheet.getWidth() / totalBolas;
         int spriteAlto = spriteSheet.getHeight();
+
         // Selecciona aleatoriamente un índice (0, 1 o 2)
         int bolaIndex = rand.nextInt(3);
-        // Opcional: verifica el valor con Log (requiere importar android.util.Log)
-        // Log.d("Enemigo", "bolaIndex: " + bolaIndex);
-        int srcX = bolaIndex * spriteAncho;
-        Rect src = new Rect(srcX, 0, srcX + spriteAncho, spriteAlto);
-        bolaIndividual = Bitmap.createBitmap(spriteSheet, src.left, src.top, src.width(), src.height());
+
+        int srcX = bolaIndex * spriteAncho; // Posición en el spriteSheet
+        Rect src = new Rect(srcX, 0, srcX + spriteAncho, spriteAlto); // Rectángulo de recorte
+        bolaIndividual = Bitmap.createBitmap(spriteSheet, src.left, src.top, src.width(), src.height()); // Recorta la bola
 
         ancho = bolaIndividual.getWidth();
         alto = bolaIndividual.getHeight();
 
         velocidadX = (rand.nextFloat() * 6 - 3) * speedFactor;
         velocidadY = (rand.nextFloat() * 6 - 3) * speedFactor;
+
         if (Math.abs(velocidadX) < 1) {
             velocidadX = (velocidadX < 0) ? -2 : 2;
             velocidadX *= speedFactor;
@@ -72,13 +84,23 @@ public class Enemigo {
         }
     }
 
-
-    // Constructor por defecto, speedFactor = 1.0f
+    /**
+     * Constructor de la clase Enemigo.
+     * @param context Contexto de la aplicación
+     * @param juego Referencia al juego
+     * @param sizeLevel Tamaño de la bola: 3 = grande, 2 = mediana, 1 = pequeña
+     * @param startX Posición inicial en el eje X
+     * @param startY Posición inicial en el eje Y
+     */
     public Enemigo(Context context, EboraJuego juego, int sizeLevel, float startX, float startY) {
         this(context, juego, sizeLevel, startX, startY, 1.0f);
     }
 
-    // Selecciona el recurso de imagen según el tamaño
+    /**
+     * Obtiene la imagen adecuada según el tamaño de la bola.
+     * @param level Tamaño de la bola: 3 = grande, 2 = mediana, 1 = pequeña
+     * @return Imagen correspondiente
+     */
     private int getResourceForSizeLevel(int level) {
         if (level == 3) {
             return R.drawable.bolas2;  // Imagen para bola grande (debe tener 3 variantes en línea)
@@ -89,6 +111,9 @@ public class Enemigo {
         }
     }
 
+    /**
+     * Actualiza la posición de la bola.
+     */
     public void update() {
         x += velocidadX;
         y += velocidadY;
@@ -112,29 +137,27 @@ public class Enemigo {
         }
     }
 
-
+    /**
+     * Dibuja la bola en el canvas.
+     * @param canvas lienzo
+     */
     public void draw(Canvas canvas) {
         canvas.drawBitmap(bolaIndividual, x, y, null);
     }
 
-    // Comprueba si (px, py) está dentro del área de la bola
-    public boolean colisionaCon(float px, float py) {
-        return (px >= x && px <= x + ancho && py >= y && py <= y + alto);
-    }
-
-    // Divide la bola:
-    // - Si es grande (sizeLevel == 3): se generan 2 bolas medianas.
-    // - Si es mediana (sizeLevel == 2): se generan 3 bolas pequeñas (posicionadas para no superponerse).
-    // - Si es pequeña (sizeLevel == 1): retorna null (se elimina).
+    /**
+     * Divide la bola en dos partes.
+     * @return Arreglo de bolas divididas o null si no se puede dividir
+     */
     public Enemigo[] dividir() {
-        if (sizeLevel > 1) {
-            if (sizeLevel == 3) {
+        if (sizeLevel > 1) { // Si la bola no es pequeña
+            if (sizeLevel == 3) { // Si es grande
                 Enemigo[] nuevas = new Enemigo[2];
                 float offsetX = ancho / 3f;
                 nuevas[0] = new Enemigo(juego.getContext(), juego, sizeLevel - 1, x - offsetX, y, speedFactor);
                 nuevas[1] = new Enemigo(juego.getContext(), juego, sizeLevel - 1, x + offsetX, y, speedFactor);
                 return nuevas;
-            } else if (sizeLevel == 2) {
+            } else if (sizeLevel == 2) { // Si es mediana
                 Enemigo[] nuevas = new Enemigo[3];
                 float offsetX = ancho / 4f;
                 float offsetY = alto / 4f;

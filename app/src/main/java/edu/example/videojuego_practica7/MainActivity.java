@@ -18,6 +18,9 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+/**
+ * Actividad principal de la aplicación.
+ */
 public class MainActivity extends AppCompatActivity {
 
     private MediaPlayer mediaPlayer; // Para reproducir el sonido
@@ -91,6 +94,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
+    /**
+     * Método llamado cuando la actividad se destruye.
+     */
     @Override
     protected void onDestroy() {
         super.onDestroy();
