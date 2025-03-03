@@ -87,7 +87,7 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
 
     // Control de niveles
     private int nivel = 1;          // Nivel actual (1, 2, 3, etc.)
-    private int enemigosPorNivel = 5;   // Número de enemigos a spawnear en el primer nivel
+    private int enemigosPorNivel = 8;   // Número de enemigos a spawnear en el primer nivel
     private int enemigosEliminados = 0; // Contador de enemigos eliminados
     private Bitmap nivelesImagen;
     private boolean mostrandoNivel = false;
@@ -163,7 +163,7 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
         y = sueloY;  // El jugador comienza con sus pies en el suelo
 
         nivel = 1;
-        enemigosPorNivel = 5;  // o el número que quieras para el primer nivel
+        enemigosPorNivel = 8;  // o el número que quieras para el primer nivel
         enemigosEliminados = 0;
         fondoActual = 0;
 
@@ -175,6 +175,7 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
 
         // (2) Cargar ícono de vida
         iconoVida = BitmapFactory.decodeResource(getResources(), R.drawable.vidas);
+        iconoVida = Bitmap.createScaledBitmap(iconoVida, 80, 80, false);
 
         // Cargar el sprite con los 3 fondos
         fondoSprite = BitmapFactory.decodeResource(getResources(), R.drawable.fondo);
@@ -513,8 +514,8 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
 
         int separacion = 10;
         int anchoVida = iconoVida.getWidth();
-        int offsetX = 20; // Cambiado para que se dibuje cerca del borde izquierdo
-        int offsetY = 20; // Cambiado para que se dibuje cerca del borde superior
+        int offsetX =800; // Cambiado para que se dibuje cerca del borde izquierdo
+        int offsetY = 100; // Cambiado para que se dibuje cerca del borde superior
 
         for (int i = 0; i < vidas; i++) {
             int xPos = offsetX + i * (anchoVida + separacion);
@@ -526,11 +527,11 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
 
             // Posicionar el temporizador a la derecha de los iconos de vida
             int xTimer = offsetX + (vidas * (anchoVida + separacion)) + 50;
-            int yTimer = offsetY + 30;  // Un poco más abajo de los iconos
+            int yTimer = offsetY + 70;  // Un poco más abajo de los iconos
 
             Paint paint = new Paint();
             paint.setColor(Color.WHITE);
-            paint.setTextSize(40);
+            paint.setTextSize(60);
 
             canvas.drawText("Tiempo: " + segundosRestantes, xTimer, yTimer, paint);
         }
@@ -694,7 +695,7 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
         float posY = 0; // Aparece en la parte superior
         int sizeLevel = 3; // Pompa grande
         // Factor de velocidad según el nivel; en el nivel 1 es 1.0, aumenta un 10% por nivel adicional
-        float velocidadExtra = 1.0f + (0.2f * (nivel - 1));
+        float velocidadExtra = 1.5f + (0.3f * (nivel - 1));
         Enemigo nuevaPompa = new Enemigo(getContext(), this, sizeLevel, posX, posY, velocidadExtra);
         listaPompas.add(nuevaPompa);
     }
