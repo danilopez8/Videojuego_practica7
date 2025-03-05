@@ -11,17 +11,25 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+/**
+ * Actividad principal del juego.
+ */
 public class ActividadJuego extends AppCompatActivity {
 
-    EboraJuego j;
+    EboraJuego j; // Referencia al juego
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        j = new EboraJuego(this);
-        setContentView(j);
-        hideSystemUI();
-        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+        j = new EboraJuego(this); // Crea el juego
+        setContentView(j);// Establece el juego como contenido de la actividad
+        hideSystemUI(); // Oculta la barra de estado y la barra de navegación
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE); // Restricción de orientación
     }
+
+    /**
+     * Oculta la barra de estado y la barra de navegación.
+     */
     private void hideSystemUI(){
         if(Build.VERSION.SDK_INT>Build.VERSION_CODES.HONEYCOMB){
             j.setSystemUiVisibility(
@@ -31,8 +39,8 @@ public class ActividadJuego extends AppCompatActivity {
                             | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION // hide nav bar (botones virtuales)
                             | View.SYSTEM_UI_FLAG_FULLSCREEN // hide status bar (barra de estado hora y bateria..)
                             | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY); //matiene el modo inmersivo incluso si el usuario toca la pantalla
-            //cuando se presiona volumen, por ej, se cambia la visibilidad, hay que volver
-            //a ocultar
+
+
             j.setOnSystemUiVisibilityChangeListener(new View.OnSystemUiVisibilityChangeListener() {
                 @Override
                 public void onSystemUiVisibilityChange(int visibility) {
@@ -41,4 +49,6 @@ public class ActividadJuego extends AppCompatActivity {
             });
         }
     }
+
+
 }

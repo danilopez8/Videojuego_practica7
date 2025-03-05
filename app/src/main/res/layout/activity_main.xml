@@ -9,16 +9,16 @@
     android:background="@drawable/tittle"
     >
 
-
-    <Button
-        android:id="@+id/button"
-        android:layout_width="217dp"
-        android:layout_height="88dp"
-        android:layout_marginTop="516dp"
-        android:layout_marginEnd="96dp"
-        android:text="Comenzar"
-        android:textSize="24dp"
+    <ImageButton
+        android:id="@+id/startButton"
+        android:layout_width="255dp"
+        android:layout_height="77dp"
+        android:scaleType="center"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.753"
+        app:srcCompat="@drawable/start" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

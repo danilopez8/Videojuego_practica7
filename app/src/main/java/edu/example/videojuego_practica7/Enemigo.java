@@ -5,52 +5,75 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Rect;
-
 import java.util.Random;
+
+/**
+ * Clase que representa un enemigo en el juego.
+ */
 public class Enemigo {
 
-    private Bitmap spriteSheet;          // Imagen de la bola (contiene las 3 bolas en línea)
-    private Bitmap bolaIndividual;       // Sprite recortado de una sola bola
+    // Imagen original (spriteSheet) que contiene 3 variantes en línea
+    private Bitmap spriteSheet;
+    // Sprite recortado: la bola que se usará (se extrae la variante central)
+    private Bitmap bolaIndividual;
+
+    // Posición y velocidad
     private float x, y;
     private float velocidadX, velocidadY;
-    private int ancho, alto;
-    private int sizeLevel;
-    private EboraJuego juego;
-    private Random rand;
-    private float speedFactor;           // Factor de velocidad
 
-    // Constructor con speedFactor
+    // Dimensiones de la bola recortada
+    private int ancho, alto;
+
+    // Tamaño de la bola: 3 = grande, 2 = mediana, 1 = pequeña
+    private int sizeLevel;
+
+    // Referencia al juego para obtener ancho y alto
+    private EboraJuego juego;
+
+    // Factor de velocidad (ajustable según el nivel)
+    private float speedFactor;
+
+    // Generador de números aleatorios
+    private Random rand;
+
+    /**
+     * Constructor de la clase Enemigo.
+     * @param context Contexto de la aplicación
+     * @param juego Referencia al juego
+     * @param sizeLevel Tamaño de la bola: 3 = grande, 2 = mediana, 1 = pequeña
+     * @param startX Posición inicial en el eje X
+     * @param startY Posición inicial en el eje Y
+     * @param speedFactor Factor de velocidad (ajustable según el nivel)
+     */
     public Enemigo(Context context, EboraJuego juego, int sizeLevel, float startX, float startY, float speedFactor) {
         this.juego = juego;
         this.sizeLevel = sizeLevel;
         this.x = startX;
         this.y = startY;
-        this.rand = new Random();
-        this.speedFactor = speedFactor;  // Asignamos correctamente el parámetro
+        // Inicializa el Random usando el tiempo actual
+        this.rand = new Random(System.currentTimeMillis());
+        this.speedFactor = speedFactor;
 
-        // Cargar la imagen completa de bolas (contiene las 3 bolas en una fila)
+        // Cargar la imagen adecuada según el tamaño
         spriteSheet = BitmapFactory.decodeResource(context.getResources(), getResourceForSizeLevel(sizeLevel));
 
-        // Extraer solo una bola de la imagen (dividiendo en 3 secciones)
-        int totalBolas = 3; // La imagen contiene 3 bolas
-        int frameWidth = spriteSheet.getWidth() / totalBolas;
-        int frameHeight = spriteSheet.getHeight();
+        int totalBolas = 3;
+        int spriteAncho = spriteSheet.getWidth() / totalBolas;
+        int spriteAlto = spriteSheet.getHeight();
 
-        // Seleccionamos aleatoriamente un color de bola (0, 1 o 2)
+        // Selecciona aleatoriamente un índice (0, 1 o 2)
         int bolaIndex = rand.nextInt(3);
-        int srcX = bolaIndex * frameWidth;
-        Rect src = new Rect(srcX, 0, srcX + frameWidth, frameHeight);
-        bolaIndividual = Bitmap.createBitmap(spriteSheet, src.left, src.top, src.width(), src.height());
 
-        // Establecer el ancho y alto según el recorte de una bola
+        int srcX = bolaIndex * spriteAncho; // Posición en el spriteSheet
+        Rect src = new Rect(srcX, 0, srcX + spriteAncho, spriteAlto); // Rectángulo de recorte
+        bolaIndividual = Bitmap.createBitmap(spriteSheet, src.left, src.top, src.width(), src.height()); // Recorta la bola
+
         ancho = bolaIndividual.getWidth();
         alto = bolaIndividual.getHeight();
 
-        // Asignar velocidades aleatorias en X e Y, multiplicadas por speedFactor
         velocidadX = (rand.nextFloat() * 6 - 3) * speedFactor;
         velocidadY = (rand.nextFloat() * 6 - 3) * speedFactor;
 
-        // Evitar velocidades demasiado pequeñas
         if (Math.abs(velocidadX) < 1) {
             velocidadX = (velocidadX < 0) ? -2 : 2;
             velocidadX *= speedFactor;
@@ -61,68 +84,88 @@ public class Enemigo {
         }
     }
 
-    // Constructor por defecto, con speedFactor = 1.0f
+    /**
+     * Constructor de la clase Enemigo.
+     * @param context Contexto de la aplicación
+     * @param juego Referencia al juego
+     * @param sizeLevel Tamaño de la bola: 3 = grande, 2 = mediana, 1 = pequeña
+     * @param startX Posición inicial en el eje X
+     * @param startY Posición inicial en el eje Y
+     */
     public Enemigo(Context context, EboraJuego juego, int sizeLevel, float startX, float startY) {
         this(context, juego, sizeLevel, startX, startY, 1.0f);
     }
 
-    // Devuelve la imagen de bolas según su tamaño
+    /**
+     * Obtiene la imagen adecuada según el tamaño de la bola.
+     * @param level Tamaño de la bola: 3 = grande, 2 = mediana, 1 = pequeña
+     * @return Imagen correspondiente
+     */
     private int getResourceForSizeLevel(int level) {
         if (level == 3) {
-            return R.drawable.bolas2;  // Imagen con las bolas grandes
+            return R.drawable.bolas2;  // Imagen para bola grande (debe tener 3 variantes en línea)
         } else if (level == 2) {
-            return R.drawable.bolas3;  // Imagen con las bolas medianas
+            return R.drawable.bolas3;  // Imagen para bola mediana
         } else {
-            return R.drawable.bolas4;  // Imagen con las bolas pequeñas
+            return R.drawable.bolas4;  // Imagen para bola pequeña
         }
     }
 
+    /**
+     * Actualiza la posición de la bola.
+     */
     public void update() {
-        // Movimiento horizontal y vertical
         x += velocidadX;
         y += velocidadY;
 
-        // Rebote en bordes izquierdo/derecho
-        if (x < 0) {
-            x = 0;
+        // Rebote en el borde izquierdo/derecho usando limiteIzquierdo/limiteDerecho
+        if (x < juego.limiteIzquierdo) {
+            x = juego.limiteIzquierdo;
             velocidadX *= -1;
-        } else if (x + ancho > juego.getWidth()) {
-            x = juego.getWidth() - ancho;
+        } else if (x + ancho > juego.limiteDerecho) {
+            x = juego.limiteDerecho - ancho;
             velocidadX *= -1;
         }
 
-        // Rebote en bordes superior/inferior
-        if (y < 0) {
-            y = 0;
+        // Rebote en el borde superior/inferior usando limiteSuperior/limiteInferior
+        if (y < juego.limiteSuperior) {
+            y = juego.limiteSuperior;
             velocidadY *= -1;
-        } else if (y + alto > juego.getHeight()) {
-            y = juego.getHeight() - alto;
+        } else if (y + alto > juego.limiteInferior) {
+            y = juego.limiteInferior - alto;
             velocidadY *= -1;
         }
     }
 
+    /**
+     * Dibuja la bola en el canvas.
+     * @param canvas lienzo
+     */
     public void draw(Canvas canvas) {
         canvas.drawBitmap(bolaIndividual, x, y, null);
     }
 
-    // Comprueba si (px, py) está dentro de la bola
-    public boolean colisionaCon(float px, float py) {
-        return (px >= x && px <= x + ancho &&
-                py >= y && py <= y + alto);
-    }
-
-    // Divide la bola en más pequeñas si no es la más pequeña
+    /**
+     * Divide la bola en dos partes.
+     * @return Arreglo de bolas divididas o null si no se puede dividir
+     */
     public Enemigo[] dividir() {
-        if (sizeLevel > 1) {
-            Enemigo[] nuevas = new Enemigo[2];
-
-            // Separación entre las nuevas bolas
-            float offsetX = ancho / 2f;
-            float offsetY = alto / 4f;
-
-            nuevas[0] = new Enemigo(juego.getContext(), juego, sizeLevel - 1, x - offsetX, y - offsetY, speedFactor);
-            nuevas[1] = new Enemigo(juego.getContext(), juego, sizeLevel - 1, x + offsetX, y - offsetY, speedFactor);
-            return nuevas;
+        if (sizeLevel > 1) { // Si la bola no es pequeña
+            if (sizeLevel == 3) { // Si es grande
+                Enemigo[] nuevas = new Enemigo[2];
+                float offsetX = ancho / 3f;
+                nuevas[0] = new Enemigo(juego.getContext(), juego, sizeLevel - 1, x - offsetX, y, speedFactor);
+                nuevas[1] = new Enemigo(juego.getContext(), juego, sizeLevel - 1, x + offsetX, y, speedFactor);
+                return nuevas;
+            } else if (sizeLevel == 2) { // Si es mediana
+                Enemigo[] nuevas = new Enemigo[3];
+                float offsetX = ancho / 4f;
+                float offsetY = alto / 4f;
+                nuevas[0] = new Enemigo(juego.getContext(), juego, sizeLevel - 1, x - offsetX, y - offsetY, speedFactor);
+                nuevas[1] = new Enemigo(juego.getContext(), juego, sizeLevel - 1, x, y - offsetY * 1.2f, speedFactor);
+                nuevas[2] = new Enemigo(juego.getContext(), juego, sizeLevel - 1, x + offsetX, y - offsetY, speedFactor);
+                return nuevas;
+            }
         }
         return null;
     }

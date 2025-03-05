@@ -2,12 +2,15 @@ package edu.example.videojuego_practica7;
 
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.graphics.Color;
 import android.media.MediaPlayer; // Importante
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageButton;
+import android.widget.ImageView;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
@@ -15,6 +18,9 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+/**
+ * Actividad principal de la aplicación.
+ */
 public class MainActivity extends AppCompatActivity {
 
     private MediaPlayer mediaPlayer; // Para reproducir el sonido
@@ -26,7 +32,8 @@ public class MainActivity extends AppCompatActivity {
         EdgeToEdge.enable(this);
         AnimarBoton();
 
-        Button b = findViewById(R.id.button);
+        @SuppressLint({"MissingInflatedId", "LocalSuppress"})
+        ImageButton b = findViewById(R.id.startButton);
         b.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -59,7 +66,7 @@ public class MainActivity extends AppCompatActivity {
 
     public void AnimarBoton(){
         AnimatorSet animadorBton = new AnimatorSet();
-        Button b=findViewById(R.id.button);
+        ImageButton b = findViewById(R.id.startButton);
 
         //1ª animación, trasladar desde la izquierda (800 pixeles menos hasta la posición inicial (0)
         ObjectAnimator trasladar= ObjectAnimator.ofFloat(b,"translationX",-800,0);
@@ -87,6 +94,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
+    /**
+     * Método llamado cuando la actividad se destruye.
+     */
     @Override
     protected void onDestroy() {
         super.onDestroy();
