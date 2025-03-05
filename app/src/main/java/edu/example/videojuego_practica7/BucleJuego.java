@@ -63,7 +63,7 @@ public class BucleJuego extends Thread{
                     // 3) Renderiza en el canvas
                     juego.renderizar(canvas);
 
-                    // 4) Control de FPS
+                    // 4) Control de FPS (sleep)
                     tiempoDiferencia = System.currentTimeMillis() - tiempoComienzo;
                     tiempoDormir = (int) (TIEMPO_FRAME - tiempoDiferencia);
 

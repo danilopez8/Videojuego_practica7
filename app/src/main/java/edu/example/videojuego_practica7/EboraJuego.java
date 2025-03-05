@@ -557,6 +557,7 @@ public class EboraJuego extends SurfaceView implements SurfaceHolder.Callback, R
      * Verifica colisiones con el jugador.
      */
     private void verificarColisionJugador() {
+        if (!puedeMoverse) return; // Evitas colisiones si el jugador no se puede mover
         if (jugadorGolpeado) {
             // Si el jugador está en modo inmune, no se detectan colisiones.
             return;
